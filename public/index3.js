@@ -38,16 +38,16 @@ themeToggler.addEventListener('click', () => {
 /*
   Plotly.js graph and chart setup code
 */
-var Pintu1HistoryDiv = document.getElementById('pintu1-history');
+var waterlevel1HistoryDiv = document.getElementById('pintu1-history');
 
-var Pintu1GaugeDiv = document.getElementById('pintu1-gauge');
+var waterlevel1GaugeDiv = document.getElementById('pintu1-gauge');
 
-const historyCharts = Pintu1HistoryDiv;
+const historyCharts = waterlevel1HistoryDiv;
 
-const gaugeCharts = Pintu1GaugeDiv;
+const gaugeCharts = waterlevel1GaugeDiv;
 
 // History Data
-var Pintu1Trace = {
+var waterlevel1Trace = {
   x: [],
   y: [],
   name: 'Pintu 1',
@@ -55,7 +55,7 @@ var Pintu1Trace = {
   type: 'line',
 };
 
-var Pintu1Layout = {
+var waterlevel1Layout = {
   autosize: true,
   title: {
     text: 'Inlet Gate',
@@ -86,7 +86,7 @@ var config = { responsive: true, displayModeBar: false };
 
 // Event listener when page is loaded
 window.addEventListener('load', (event) => {
-  Plotly.newPlot(Pintu1HistoryDiv, [Pintu1Trace], Pintu1Layout, config);
+  Plotly.newPlot(waterlevel1HistoryDiv, [waterlevel1Trace], waterlevel1Layout, config);
 
   // Get MQTT Connection
   fetchMQTTConnection();
@@ -96,7 +96,7 @@ window.addEventListener('load', (event) => {
 });
 
 // Gauge Data
-var Pintu1Data = [
+var waterlevel1Data = [
   {
     domain: { x: [0, 1], y: [0, 1] },
     value: 0,
@@ -121,11 +121,11 @@ var Pintu1Data = [
 
 var layout = { width: 300, height: 250, margin: { t: 0, b: 0, l: 0, r: 0 } };
 
-Plotly.newPlot(Pintu1GaugeDiv, Pintu1Data, layout);
+Plotly.newPlot(waterlevel1GaugeDiv, waterlevel1Data, layout);
 
 // Pintu 1
-let newpintu1XArray = [];
-let newpintu1YArray = [];
+let newwaterlevel1XArray = [];
+let newwaterlevel1YArray = [];
 
 // The maximum number of data points displayed on our scatter/line graph
 let MAX_GRAPH_POINTS = 12;
@@ -136,14 +136,14 @@ function updateSensorReadings(jsonResponse) {
   console.log(typeof jsonResponse);
   console.log(jsonResponse);
 
-  let pintu1 = Number(jsonResponse.pintu1).toFixed(2);
+  let pintu1 = Number(jsonResponse.waterlevel1).toFixed(2);
 
   updateBoxes(pintu1);
 
   updateGauge(pintu1);
 
   // Update Pintu 1 Line Chart
-  updateCharts(Pintu1HistoryDiv, newpintu1XArray, newpintu1YArray, pintu1);
+  updateCharts(waterlevel1HistoryDiv, newwaterlevel1XArray, newwaterlevel1YArray, pintu1);
 }
 
 function updateBoxes(pintu1) {
@@ -157,7 +157,7 @@ function updateGauge(pintu1) {
     value: pintu1,
   };
 
-  Plotly.update(Pintu1GaugeDiv, pintu1_update);
+  Plotly.update(waterlevel1GaugeDiv, pintu1_update);
 }
 
 function updateCharts(lineChartDiv, xArray, yArray, sensorRead) {
