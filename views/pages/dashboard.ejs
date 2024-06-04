@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%=dashboardTitle%></title>
+    <title><%= dashboardTitle %></title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Sharp" rel="stylesheet" />
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -22,7 +22,7 @@
           </div>
         </div>
         <div class="sidebar">
-          <a href="/" class="active">
+          <a href="/dashboard" class="active">
             <span class="material-symbols-sharp"> dashboard </span>
             <h3>Dashboard</h3>
           </a>
@@ -35,17 +35,17 @@
             <h3>Outlet Gate</h3>
           </a>
           <a href="/logout" class="active">
-            <span class="material-symbols-sharp"> logout</span>
+            <span class="material-symbols-sharp"> logout </span>
             <h3>Logout</h3>
           </a>
         </div>
       </aside>
       <main>
-        <h1><%=name%></h1>
-        <h2><%=dashboardTitle%></h2>
-        <div class="connection-status">
+        <h1><%= name %></h1>
+        <h2><%= dashboardTitle %></h2>
+        <!-- <div class="connection-status">
           <h2>Connection Status: <span class="status">Disconnected</span></h2>
-        </div>
+        </div> -->
         <div class="insights">
           <div class="pintu1">
             <div class="middle">

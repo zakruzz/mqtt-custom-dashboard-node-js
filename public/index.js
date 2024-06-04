@@ -38,33 +38,33 @@ themeToggler.addEventListener('click', () => {
 /*
   Plotly.js graph and chart setup code
 */
-var Pintu1HistoryDiv = document.getElementById('pintu1-history');
-var Pintu2HistoryDiv = document.getElementById('pintu2-history');
+var waterlevel1HistoryDiv = document.getElementById('pintu1-history');
+var waterlevel2HistoryDiv = document.getElementById('pintu2-history');
 
-var Pintu1GaugeDiv = document.getElementById('pintu1-gauge');
-var Pintu2GaugeDiv = document.getElementById('pintu2-gauge');
+var waterlevel1GaugeDiv = document.getElementById('pintu1-gauge');
+var waterlevel2GaugeDiv = document.getElementById('pintu2-gauge');
 
-const historyCharts = [Pintu1HistoryDiv, Pintu2HistoryDiv];
+const historyCharts = [waterlevel1HistoryDiv, waterlevel2HistoryDiv];
 
-const gaugeCharts = [Pintu1GaugeDiv, Pintu2GaugeDiv];
+const gaugeCharts = [waterlevel1GaugeDiv, waterlevel2GaugeDiv];
 
 // History Data
-var Pintu1Trace = {
+var waterlevel1Trace = {
   x: [],
   y: [],
-  name: 'Pintu 1',
+  name: 'water level 1',
   mode: 'lines+markers',
   type: 'line',
 };
-var Pintu2Trace = {
+var waterlevel2Trace = {
   x: [],
   y: [],
-  name: 'Pintu 2',
+  name: 'water level 2',
   mode: 'lines+markers',
   type: 'line',
 };
 
-var Pintu1Layout = {
+var waterlevel1Layout = {
   autosize: true,
   title: {
     text: 'Inlet Gate',
@@ -91,7 +91,7 @@ var Pintu1Layout = {
     autorange: true,
   },
 };
-var Pintu2Layout = {
+var waterlevel2Layout = {
   autosize: true,
   title: {
     text: 'Outlet Gate',
@@ -122,8 +122,8 @@ var config = { responsive: true, displayModeBar: false };
 
 // Event listener when page is loaded
 window.addEventListener('load', (event) => {
-  Plotly.newPlot(Pintu1HistoryDiv, [Pintu1Trace], Pintu1Layout, config);
-  Plotly.newPlot(Pintu2HistoryDiv, [Pintu2Trace], Pintu2Layout, config);
+  Plotly.newPlot(waterlevel1HistoryDiv, [waterlevel1Trace], waterlevel1Layout, config);
+  Plotly.newPlot(waterlevel2HistoryDiv, [waterlevel2Trace], waterlevel2Layout, config);
 
   // Get MQTT Connection
   fetchMQTTConnection();
@@ -133,14 +133,14 @@ window.addEventListener('load', (event) => {
 });
 
 // Gauge Data
-var Pintu1Data = [
+var waterlevel1Data = [
   {
     domain: { x: [0, 1], y: [0, 1] },
     value: 0,
     title: { text: 'Inlet Gate' },
     type: 'indicator',
     mode: 'gauge+number+delta',
-    delta: { reference: 30 },
+    delta: { reference: 0 },
     gauge: {
       axis: { range: [null, 3000] },
       steps: [
@@ -150,20 +150,20 @@ var Pintu1Data = [
       threshold: {
         line: { color: 'red', width: 4 },
         thickness: 0.75,
-        value: 30,
+        value: 0,
       },
     },
   },
 ];
 
-var Pintu2Data = [
+var waterlevel2Data = [
   {
     domain: { x: [0, 1], y: [0, 1] },
     value: 0,
     title: { text: 'Outlet Gate' },
     type: 'indicator',
     mode: 'gauge+number+delta',
-    delta: { reference: 30 },
+    delta: { reference: 0 },
     gauge: {
       axis: { range: [null, 3000] },
       steps: [
@@ -173,7 +173,7 @@ var Pintu2Data = [
       threshold: {
         line: { color: 'red', width: 4 },
         thickness: 0.75,
-        value: 30,
+        value: 0,
       },
     },
   },
@@ -181,15 +181,15 @@ var Pintu2Data = [
 
 var layout = { width: 300, height: 250, margin: { t: 0, b: 0, l: 0, r: 0 } };
 
-Plotly.newPlot(Pintu1GaugeDiv, Pintu1Data, layout);
-Plotly.newPlot(Pintu2GaugeDiv, Pintu2Data, layout);
+Plotly.newPlot(waterlevel1GaugeDiv, waterlevel1Data, layout);
+Plotly.newPlot(waterlevel2GaugeDiv, waterlevel2Data, layout);
 
 // Pintu 1
-let newpintu1XArray = [];
-let newpintu1YArray = [];
+let newwaterlevel1XArray = [];
+let newwaterlevel1YArray = [];
 // Pintu 2
-let newpintu2XArray = [];
-let newpintu2YArray = [];
+let newwaterlevel2XArray = [];
+let newwaterlevel2YArray = [];
 
 // The maximum number of data points displayed on our scatter/line graph
 let MAX_GRAPH_POINTS = 12;
@@ -200,17 +200,17 @@ function updateSensorReadings(jsonResponse) {
   console.log(typeof jsonResponse);
   console.log(jsonResponse);
 
-  let pintu1 = Number(jsonResponse.pintu1).toFixed(2);
-  let pintu2 = Number(jsonResponse.pintu2).toFixed(2);
+  let pintu1 = Number(jsonResponse.waterlevel1).toFixed(2);
+  let pintu2 = Number(jsonResponse.waterlevel2).toFixed(2);
 
   updateBoxes(pintu1, pintu2);
 
   updateGauge(pintu1, pintu2);
 
   // Update Pintu 1 Line Chart
-  updateCharts(Pintu1HistoryDiv, newpintu1XArray, newpintu1YArray, pintu1);
+  updateCharts(waterlevel1HistoryDiv, newwaterlevel1XArray, newwaterlevel1YArray, pintu1);
   // Update Pintu 2 Line Chart
-  updateCharts(Pintu2HistoryDiv, newpintu2XArray, newpintu2YArray, pintu2);
+  updateCharts(waterlevel2HistoryDiv, newwaterlevel2XArray, newwaterlevel2YArray, pintu2);
 }
 
 function updateBoxes(pintu1, pintu2) {
@@ -229,8 +229,8 @@ function updateGauge(pintu1, pintu2) {
     value: pintu2,
   };
 
-  Plotly.update(Pintu1GaugeDiv, pintu1_update);
-  Plotly.update(Pintu2GaugeDiv, pintu2_update);
+  Plotly.update(waterlevel1GaugeDiv, pintu1_update);
+  Plotly.update(waterlevel2GaugeDiv, pintu2_update);
 }
 
 function updateCharts(lineChartDiv, xArray, yArray, sensorRead) {
@@ -331,11 +331,12 @@ document.getElementById('pintu1-down').addEventListener('click', function () {
 /*
   MQTT Message Handling Code
 */
-const mqttStatus = document.querySelector('.status');
+const mqttStatus = document.querySelector('.Status');
 
 function onConnect(message) {
   mqttStatus.textContent = 'Connected';
 }
+
 function onMessage(topic, message) {
   var stringResponse = message.toString();
   var messageResponse = JSON.parse(stringResponse);

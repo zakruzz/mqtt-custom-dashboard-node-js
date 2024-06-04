@@ -1,0 +1,9 @@
+{
+  "NAME": "SI-TP Sistem Informasi Pintu Pengendali Banjir",
+  "NAME_USER": "Admin",
+  "DASHBOARD_TITLE": "Home DASHBOARD",
+  "PINTU1_TITLE": "DASHBOARD Inlet Gate",
+  "PINTU2_TITLE": "DASHBOARD Outlet Gate",
+  "MQTT_BROKER": "ws://127.0.0.1:9001/mqtt",
+  "MQTT_TOPIC": "sensorReadings"
+}
