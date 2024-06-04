@@ -103,7 +103,7 @@ var Pintu1Data = [
     title: { text: 'Inlet Gate' },
     type: 'indicator',
     mode: 'gauge+number+delta',
-    delta: { reference: 30 },
+    delta: { reference: 0 },
     gauge: {
       axis: { range: [null, 3000] },
       steps: [
@@ -113,7 +113,7 @@ var Pintu1Data = [
       threshold: {
         line: { color: 'red', width: 4 },
         thickness: 0.75,
-        value: 30,
+        value: 0,
       },
     },
   },
