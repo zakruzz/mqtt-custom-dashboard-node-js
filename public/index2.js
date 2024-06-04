@@ -38,24 +38,15 @@ themeToggler.addEventListener('click', () => {
 /*
   Plotly.js graph and chart setup code
 */
-var Pintu1HistoryDiv = document.getElementById('pintu1-history');
 var Pintu2HistoryDiv = document.getElementById('pintu2-history');
 
-var Pintu1GaugeDiv = document.getElementById('pintu1-gauge');
 var Pintu2GaugeDiv = document.getElementById('pintu2-gauge');
 
-const historyCharts = [Pintu1HistoryDiv, Pintu2HistoryDiv];
+const historyCharts = Pintu2HistoryDiv;
 
-const gaugeCharts = [Pintu1GaugeDiv, Pintu2GaugeDiv];
+const gaugeCharts = Pintu2GaugeDiv;
 
 // History Data
-var Pintu1Trace = {
-  x: [],
-  y: [],
-  name: 'Pintu 1',
-  mode: 'lines+markers',
-  type: 'line',
-};
 var Pintu2Trace = {
   x: [],
   y: [],
@@ -64,33 +55,6 @@ var Pintu2Trace = {
   type: 'line',
 };
 
-var Pintu1Layout = {
-  autosize: true,
-  title: {
-    text: 'Inlet Gate',
-  },
-  font: {
-    size: 12,
-    color: chartFontColor,
-    family: 'poppins, san-serif',
-  },
-  colorway: ['#05AD86'],
-  margin: { t: 40, b: 40, l: 30, r: 30, pad: 10 },
-  plot_bgcolor: chartBGColor,
-  paper_bgcolor: chartBGColor,
-  xaxis: {
-    color: chartAxisColor,
-    linecolor: chartAxisColor,
-    gridwidth: '2',
-    autorange: true,
-  },
-  yaxis: {
-    color: chartAxisColor,
-    linecolor: chartAxisColor,
-    gridwidth: '2',
-    autorange: true,
-  },
-};
 var Pintu2Layout = {
   autosize: true,
   title: {
@@ -122,7 +86,6 @@ var config = { responsive: true, displayModeBar: false };
 
 // Event listener when page is loaded
 window.addEventListener('load', (event) => {
-  Plotly.newPlot(Pintu1HistoryDiv, [Pintu1Trace], Pintu1Layout, config);
   Plotly.newPlot(Pintu2HistoryDiv, [Pintu2Trace], Pintu2Layout, config);
 
   // Get MQTT Connection
@@ -133,29 +96,6 @@ window.addEventListener('load', (event) => {
 });
 
 // Gauge Data
-var Pintu1Data = [
-  {
-    domain: { x: [0, 1], y: [0, 1] },
-    value: 0,
-    title: { text: 'Inlet Gate' },
-    type: 'indicator',
-    mode: 'gauge+number+delta',
-    delta: { reference: 30 },
-    gauge: {
-      axis: { range: [null, 3000] },
-      steps: [
-        { range: [0, 20], color: 'lightgray' },
-        { range: [20, 30], color: 'gray' },
-      ],
-      threshold: {
-        line: { color: 'red', width: 4 },
-        thickness: 0.75,
-        value: 30,
-      },
-    },
-  },
-];
-
 var Pintu2Data = [
   {
     domain: { x: [0, 1], y: [0, 1] },
@@ -181,12 +121,8 @@ var Pintu2Data = [
 
 var layout = { width: 300, height: 250, margin: { t: 0, b: 0, l: 0, r: 0 } };
 
-Plotly.newPlot(Pintu1GaugeDiv, Pintu1Data, layout);
 Plotly.newPlot(Pintu2GaugeDiv, Pintu2Data, layout);
 
-// Pintu 1
-let newpintu1XArray = [];
-let newpintu1YArray = [];
 // Pintu 2
 let newpintu2XArray = [];
 let newpintu2YArray = [];
@@ -200,36 +136,27 @@ function updateSensorReadings(jsonResponse) {
   console.log(typeof jsonResponse);
   console.log(jsonResponse);
 
-  let pintu1 = Number(jsonResponse.pintu1).toFixed(2);
   let pintu2 = Number(jsonResponse.pintu2).toFixed(2);
 
-  updateBoxes(pintu1, pintu2);
+  updateBoxes(pintu2);
 
-  updateGauge(pintu1, pintu2);
+  updateGauge(pintu2);
 
-  // Update Pintu 1 Line Chart
-  updateCharts(Pintu1HistoryDiv, newpintu1XArray, newpintu1YArray, pintu1);
   // Update Pintu 2 Line Chart
   updateCharts(Pintu2HistoryDiv, newpintu2XArray, newpintu2YArray, pintu2);
 }
 
-function updateBoxes(pintu1, pintu2) {
-  let pintu1Div = document.getElementById('pintu1');
+function updateBoxes(pintu2) {
   let pintu2Div = document.getElementById('pintu2');
 
-  pintu1Div.innerHTML = pintu1 + 'M';
   pintu2Div.innerHTML = pintu2 + 'M';
 }
 
-function updateGauge(pintu1, pintu2) {
-  var pintu1_update = {
-    value: pintu1,
-  };
+function updateGauge(pintu2) {
   var pintu2_update = {
     value: pintu2,
   };
 
-  Plotly.update(Pintu1GaugeDiv, pintu1_update);
   Plotly.update(Pintu2GaugeDiv, pintu2_update);
 }
 
@@ -316,15 +243,15 @@ function handleDeviceChange(e) {
   }
 }
 
-document.getElementById('pintu1-up').addEventListener('click', function () {
+document.getElementById('pintu2-up').addEventListener('click', function () {
   // Logic to send "Up" command for Pintu 1
-  console.log('Pintu 1 Up button clicked');
+  console.log('Outlet Gate Up button clicked');
   // Add your MQTT or AJAX call here
 });
 
-document.getElementById('pintu1-down').addEventListener('click', function () {
+document.getElementById('pintu2-down').addEventListener('click', function () {
   // Logic to send "Down" command for Pintu 1
-  console.log('Pintu 1 Down button clicked');
+  console.log('Oulet Gate Down button clicked');
   // Add your MQTT or AJAX call here
 });
 

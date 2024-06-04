@@ -59,24 +59,40 @@
             </div>
           </div>
 
-          <div class="pintu2">
-            <div class="middle">
-              <div class="left">
-                <h3>Outlet Gate</h3>
-                <h1 id="pintu2"></h1>
-              </div>
-              <div class="icon">
-                <span class="material-symbols-sharp"> height </span>
-              </div>
-            </div>
+          <div class="controls">
+            <P style="font-size: 12px; margin-top: 4px"><b>Kontrol Inlet Gate</b></P>
+            <button id="pintu1-up" class="control-btn">Up</button>
+            <button id="pintu1-down" class="control-btn">Down</button>
           </div>
         </div>
         <!-- End of Insights -->
         <div class="histories">
           <h2>Historical Charts</h2>
-          <div class="history-charts">
+          <div class="history-charts-pintu1">
             <div id="pintu1-history" class="history-divs"></div>
-            <div id="pintu2-history" class="history-divs"></div>
+            <!-- <div id="pintu2-history" class="history-divs" style="display: none"></div> -->
+          </div>
+        </div>
+
+        <div class="data-table">
+          <h2>Data Table</h2>
+          <table id="dataTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data rows will be inserted here -->
+            </tbody>
+          </table>
+          <div class="pagination">
+            <button id="prevPage">Previous</button>
+            <span id="pageDisplay">1</span>
+            <button id="nextPage">Next</button>
           </div>
         </div>
       </main>
@@ -96,13 +112,55 @@
           <div class="item">
             <div id="pintu1-gauge"></div>
           </div>
-          <div class="item">
-            <div id="pintu2-gauge"></div>
-          </div>
         </div>
       </div>
     </div>
-    <script type="module" src="./index.js"></script>
+    <script type="module" src="./index3.js"></script>
     <script type="module" src="./mqttService.js"></script>
+    <script>
+      // JavaScript for pagination functionality
+      const data = [
+        // Sample data
+        { id: 1, name: 'Sensor 1', value: '23.4', date: '2024-06-01' },
+        { id: 2, name: 'Sensor 2', value: '19.8', date: '2024-06-01' },
+        // More sample data...
+      ];
+
+      let currentPage = 1;
+      const rowsPerPage = 10;
+
+      function displayTable(page) {
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = '';
+        const start = (page - 1) * rowsPerPage;
+        const end = page * rowsPerPage;
+        const paginatedData = data.slice(start, end);
+
+        for (const row of paginatedData) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.id}</td><td>${row.name}</td><td>${row.value}</td><td>${row.date}</td>`;
+          tbody.appendChild(tr);
+        }
+
+        document.getElementById('pageDisplay').textContent = page;
+      }
+
+      document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          displayTable(currentPage);
+        }
+      });
+
+      document.getElementById('nextPage').addEventListener('click', () => {
+        if (currentPage * rowsPerPage < data.length) {
+          currentPage++;
+          displayTable(currentPage);
+        }
+      });
+
+      // Initial display
+      displayTable(currentPage);
+    </script>
   </body>
 </html>
