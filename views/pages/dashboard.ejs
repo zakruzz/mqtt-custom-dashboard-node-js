@@ -43,6 +43,8 @@
       <main>
         <h1><%= name %></h1>
         <h2><%= dashboardTitle %></h2>
+        <h2>Status Ketinggian Air Inlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
+        <h2>Status Ketinggian Air Outlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
         <!-- <div class="connection-status">
           <h2>Connection Status: <span class="status">Disconnected</span></h2>
         </div> -->
@@ -50,7 +52,7 @@
           <div class="pintu1">
             <div class="middle">
               <div class="left">
-                <h3>Inlet Gate</h3>
+                <h2>Inlet Gate</h2>
                 <h1 id="pintu1"></h1>
               </div>
               <div class="icon">
@@ -62,7 +64,7 @@
           <div class="pintu2">
             <div class="middle">
               <div class="left">
-                <h3>Outlet Gate</h3>
+                <h2>Outlet Gate</h2>
                 <h1 id="pintu2"></h1>
               </div>
               <div class="icon">
@@ -103,6 +105,6 @@
       </div>
     </div>
     <script type="module" src="./index.js"></script>
-    <script type="module" src="./mqttService.js"></script>
+    <!-- <script type="module" src="./mqttService.js"></script> -->
   </body>
 </html>

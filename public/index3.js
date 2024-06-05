@@ -258,48 +258,49 @@ document.getElementById('pintu1-down').addEventListener('click', function () {
 /*
   MQTT Message Handling Code
 */
-const mqttStatus = document.querySelector('.status');
 
-function onConnect(message) {
-  mqttStatus.textContent = 'Connected';
-}
-function onMessage(topic, message) {
-  var stringResponse = message.toString();
-  var messageResponse = JSON.parse(stringResponse);
-  updateSensorReadings(messageResponse);
-}
+// const mqttStatus = document.querySelector('.status');
 
-function onError(error) {
-  console.log(`Error encountered :: ${error}`);
-  mqttStatus.textContent = 'Error';
-}
+// function onConnect(message) {
+//   mqttStatus.textContent = 'Connected';
+// }
+// function onMessage(topic, message) {
+//   var stringResponse = message.toString();
+//   var messageResponse = JSON.parse(stringResponse);
+//   updateSensorReadings(messageResponse);
+// }
 
-function onClose() {
-  console.log(`MQTT connection closed!`);
-  mqttStatus.textContent = 'Closed';
-}
+// function onError(error) {
+//   console.log(`Error encountered :: ${error}`);
+//   mqttStatus.textContent = 'Error';
+// }
 
-function fetchMQTTConnection() {
-  fetch('/mqttConnDetails', {
-    method: 'GET',
-    headers: {
-      'Content-type': 'application/json; charset=UTF-8',
-    },
-  })
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data) {
-      initializeMQTTConnection(data.mqttServer, data.mqttTopic);
-    })
-    .catch((error) => console.error('Error getting MQTT Connection :', error));
-}
-function initializeMQTTConnection(mqttServer, mqttTopic) {
-  console.log(`Initializing connection to :: ${mqttServer}, topic :: ${mqttTopic}`);
-  var fnCallbacks = { onConnect, onMessage, onError, onClose };
+// function onClose() {
+//   console.log(`MQTT connection closed!`);
+//   mqttStatus.textContent = 'Closed';
+// }
 
-  var mqttService = new MQTTService(mqttServer, fnCallbacks);
-  mqttService.connect();
+// function fetchMQTTConnection() {
+//   fetch('/mqttConnDetails', {
+//     method: 'GET',
+//     headers: {
+//       'Content-type': 'application/json; charset=UTF-8',
+//     },
+//   })
+//     .then(function (response) {
+//       return response.json();
+//     })
+//     .then(function (data) {
+//       initializeMQTTConnection(data.mqttServer, data.mqttTopic);
+//     })
+//     .catch((error) => console.error('Error getting MQTT Connection :', error));
+// }
+// function initializeMQTTConnection(mqttServer, mqttTopic) {
+//   console.log(`Initializing connection to :: ${mqttServer}, topic :: ${mqttTopic}`);
+//   var fnCallbacks = { onConnect, onMessage, onError, onClose };
 
-  mqttService.subscribe(mqttTopic);
-}
+//   var mqttService = new MQTTService(mqttServer, fnCallbacks);
+//   mqttService.connect();
+
+//   mqttService.subscribe(mqttTopic);
+// }

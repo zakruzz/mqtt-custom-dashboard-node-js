@@ -43,6 +43,7 @@
       <main>
         <h1><%=name%></h1>
         <h2><%=dashboardTitle%></h2>
+        <h2>Status Ketinggian Air Outlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
         <div class="connection-status">
           <h2>Connection Status: <span class="status">Disconnected</span></h2>
         </div>
@@ -50,7 +51,7 @@
           <div class="pintu2">
             <div class="middle">
               <div class="left">
-                <h3>Outlet Gate</h3>
+                <h2>Outlet Gate</h2>
                 <h1 id="pintu2"></h1>
               </div>
               <div class="icon">
@@ -60,9 +61,9 @@
           </div>
 
           <div class="controls">
-            <P style="font-size: 12px; margin-top: 4px"><b>Kontrol Outlet Gate</b></P>
-            <button id="pintu2-up" class="control-btn">Up</button>
-            <button id="pintu2-down" class="control-btn">Down</button>
+            <P style="font-size: 16px; margin-top: 4px"><b>Kontrol Outlet Gate</b></P>
+            <button id="pintu2-up" class="control-btn">Open</button>
+            <button id="pintu2-down" class="control-btn">Close</button>
           </div>
         </div>
         <!-- End of Insights -->
@@ -116,7 +117,7 @@
       </div>
     </div>
     <script type="module" src="./index2.js"></script>
-    <script type="module" src="./mqttService.js"></script>
+    <!-- <script type="module" src="./mqttService.js"></script> -->
     <script>
       // JavaScript for pagination functionality
       const data = [
