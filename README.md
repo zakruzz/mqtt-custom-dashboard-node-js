@@ -5,7 +5,7 @@ Clone the repository
 ``` git clone https://github.com/zakruzz/mqtt-custom-dashboard-node-js.git ```  
 ``` cd mqtt-custom-dashboard-node-js ``` 
 
-Edit the .env and set the MQTT broker URL that you are using  
+Edit the config.json for optimizing front-end
 
 Install the dependencies and run the project
 ``` npm install && npm run dev ```
