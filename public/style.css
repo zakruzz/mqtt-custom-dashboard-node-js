@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --color-primary: #4B86DE;
+  --color-primary: #4b86de;
   --color-danger: #ff7782;
   --color-success: #41f1b6;
   --color-warning: #ffbb55;
@@ -216,7 +216,7 @@ main {
 }
 
 main .insights {
-  display: grid;
+  display: inline-flex;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.6rem;
 }
@@ -284,7 +284,7 @@ main .history-charts {
 }
 
 main .history-charts-pintu1 {
-  display: block;
+  display: inline-block;
   gap: 2.5rem;
   background: var(--color-white);
   border-radius: var(--border-radius-1);
@@ -294,7 +294,7 @@ main .history-charts-pintu1 {
 }
 
 main .history-charts-pintu2 {
-  display: block;
+  display: inline-block;
   gap: 2.5rem;
   background: var(--color-white);
   border-radius: var(--border-radius-1);
@@ -377,6 +377,7 @@ main .histories h2 {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  flex-direction: column;
 }
 
 .control-btn {
@@ -435,46 +436,6 @@ main .histories h2 {
   background: var(--color-primary);
   color: white;
   border-radius: var(--border-radius-1);
-}
-
-/* GAUGE CHARTS */
-.right .gauge-charts {
-  margin-top: 2rem;
-}
-.right .gauge-charts .item {
-  background: var(--color-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 0.7rem;
-  padding: 1.4rem var(--card-padding);
-  border-radius: var(--border-radius-3);
-  box-shadow: var(--box-shadow);
-  transition: all 300ms ease;
-}
-.right .gauge-charts .item:hover {
-  box-shadow: none;
-}
-
-/* .right .gauge-charts .item .right {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  margin: 0;
-  width: 100%;
-} */
-
-.right .gauge-charts .item .icon {
-  padding: 0.6rem;
-  color: var(--color-white);
-  border-radius: 50%;
-  background: var(--color-primary);
-  display: flex;
-}
-
-.right .gauge-charts .item.offline .icon {
-  background: var(--color-danger);
 }
 
 /* MEDIA QUERIES */

@@ -1,6 +1,3 @@
-// Import MQTT service
-import { MQTTService } from './mqttService.js';
-
 // Target specific HTML items
 const sideMenu = document.querySelector('aside');
 const menuBtn = document.querySelector('#menu-btn');
@@ -38,24 +35,20 @@ themeToggler.addEventListener('click', () => {
 /*
   Plotly.js graph and chart setup code
 */
-var waterlevel2HistoryDiv = document.getElementById('pintu2-history');
+var outLevelHistoryDiv = document.getElementById('pintu2-history');
 
-var waterlevel2GaugeDiv = document.getElementById('pintu2-gauge');
-
-const historyCharts = waterlevel2HistoryDiv;
-
-const gaugeCharts = waterlevel2GaugeDiv;
+const historyCharts = [outLevelHistoryDiv];
 
 // History Data
-var waterlevel2Trace = {
+var outLevelTrace = {
   x: [],
   y: [],
-  name: 'Pintu 2',
+  name: 'water level 2',
   mode: 'lines+markers',
   type: 'line',
 };
 
-var waterlevel2Layout = {
+var outLevelLayout = {
   autosize: true,
   title: {
     text: 'Outlet Gate',
@@ -86,64 +79,70 @@ var config = { responsive: true, displayModeBar: false };
 
 // Event listener when page is loaded
 window.addEventListener('load', (event) => {
-  Plotly.newPlot(waterlevel2HistoryDiv, [waterlevel2Trace], waterlevel2Layout, config);
+  Plotly.newPlot(outLevelHistoryDiv, [outLevelTrace], outLevelLayout, config);
 
-  // Get MQTT Connection
-  fetchMQTTConnection();
+  fetchSensorData();
 
   // Run it initially
   handleDeviceChange(mediaQuery);
 });
 
-// Gauge Data
-var waterlevel2Data = [
-  {
-    domain: { x: [0, 1], y: [0, 1] },
-    value: 0,
-    title: { text: 'Outlet Gate' },
-    type: 'indicator',
-    mode: 'gauge+number+delta',
-    delta: { reference: 0 },
-    gauge: {
-      axis: { range: [null, 3000] },
-      steps: [
-        { range: [0, 20], color: 'lightgray' },
-        { range: [20, 30], color: 'gray' },
-      ],
-      threshold: {
-        line: { color: 'red', width: 4 },
-        thickness: 0.75,
-        value: 0,
-      },
-    },
-  },
-];
+function fetchSensorData() {
+  axios
+    .get('/api/data')
+    .then((response2) => {
+      //console.log('Response:', response2.data); // Debug: Inspect the response structure
 
-var layout = { width: 300, height: 250, margin: { t: 0, b: 0, l: 0, r: 0 } };
+      const { outLevel } = response2.data;
+      //console.log('inLevel:', inLevel);
+      //console.log('outLevel:', outLevel);
 
-Plotly.newPlot(waterlevel2GaugeDiv, waterlevel2Data, layout);
+      updateSensorReadings(outLevel.series);
+    })
+    .catch((error) => {
+      console.error('Error fetching sensor data:', error);
+    });
+}
 
 // Pintu 2
-let newwaterlevel2XArray = [];
-let newwaterlevel2YArray = [];
+let newoutLevelXArray = [];
+let newoutLevelYArray = [];
 
 // The maximum number of data points displayed on our scatter/line graph
 let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
 // Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
-function updateSensorReadings(jsonResponse) {
-  console.log(typeof jsonResponse);
-  console.log(jsonResponse);
+function updateSensorReadings(outLevelSeries) {
+  //console.log('outLevelSeries:', outLevelSeries); // Debug: Inspect outLevelSeries
 
-  let pintu2 = Number(jsonResponse.waterlevel2).toFixed(2);
+  if (outLevelSeries) {
+    const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
+    const timestamps = outLevelSeries.map((data) => {
+      // Konversi timestamp dari detik ke milidetik jika diperlukan
+      const timestampInMilliseconds = data.timestamp; // Jika data.timestamp sudah dalam milidetik, tidak perlu mengalikannya dengan 1000
+      const date = new Date(timestampInMilliseconds);
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      };
+      return date.toLocaleString('id-ID', options); // Ganti 'id-ID' dengan locale yang diinginkan
+    });
+    //console.log('pintu1:', pintu1); // Debug: Inspect pintu1
+    //console.log('pintu2:', pintu2); // Debug: Inspect pintu2
+    //console.log('timestamps:', timestamps); // Debug: Inspect timestamps
 
-  updateBoxes(pintu2);
+    updateBoxes(pintu2[pintu2.length - 1]);
 
-  updateGauge(pintu2);
-
-  // Update Pintu 2 Line Chart
-  updateCharts(waterlevel2HistoryDiv, newwaterlevel2XArray, newwaterlevel2YArray, pintu2);
+    // Update Pintu 2 Line Chart
+    updateCharts('pintu2-history', timestamps, pintu2);
+  } else {
+    console.error('Series data is undefined');
+  }
 }
 
 function updateBoxes(pintu2) {
@@ -152,31 +151,23 @@ function updateBoxes(pintu2) {
   pintu2Div.innerHTML = pintu2 + 'M';
 }
 
-function updateGauge(pintu2) {
-  var pintu2_update = {
-    value: pintu2,
-  };
-
-  Plotly.update(waterlevel2GaugeDiv, pintu2_update);
-}
-
-function updateCharts(lineChartDiv, xArray, yArray, sensorRead) {
-  if (xArray.length >= MAX_GRAPH_POINTS) {
-    xArray.shift();
+// Function to update charts
+function updateCharts(lineChartDivId, xArray, yArray) {
+  const lineChartDiv = document.getElementById(lineChartDivId);
+  if (!lineChartDiv) {
+    //console.error(`Element with ID ${lineChartDivId} not found`);
+    return;
   }
-  if (yArray.length >= MAX_GRAPH_POINTS) {
-    yArray.shift();
-  }
-  xArray.push(ctr++);
-  yArray.push(sensorRead);
 
-  var data_update = {
-    x: [xArray],
-    y: [yArray],
-  };
-
+  const data_update = { x: [xArray], y: [yArray] };
   Plotly.update(lineChartDiv, data_update);
 }
+
+// Ensure fetchSensorData is called after the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', (event) => {
+  fetchSensorData();
+  fetchTableData();
+});
 
 function updateChartsBackground() {
   // updates the background color of historical charts
@@ -196,24 +187,6 @@ function updateChartsBackground() {
     },
   };
   historyCharts.forEach((chart) => Plotly.relayout(chart, updateHistory));
-
-  // updates the background color of gauge charts
-  var gaugeHistory = {
-    plot_bgcolor: chartBGColor,
-    paper_bgcolor: chartBGColor,
-    font: {
-      color: chartFontColor,
-    },
-    xaxis: {
-      color: chartAxisColor,
-      linecolor: chartAxisColor,
-    },
-    yaxis: {
-      color: chartAxisColor,
-      linecolor: chartAxisColor,
-    },
-  };
-  gaugeCharts.forEach((chart) => Plotly.relayout(chart, gaugeHistory));
 }
 
 const mediaQuery = window.matchMedia('(max-width: 600px)');
@@ -224,7 +197,7 @@ mediaQuery.addEventListener('change', function (e) {
 
 function handleDeviceChange(e) {
   if (e.matches) {
-    console.log('Inside Mobile');
+    //console.log('Inside Mobile');
     var updateHistory = {
       width: 323,
       height: 250,
@@ -243,64 +216,170 @@ function handleDeviceChange(e) {
   }
 }
 
+// Panggil fungsi ini ketika halaman selesai dimuat
+window.addEventListener('load', (event) => {
+  fetchConnectionStatus();
+});
+
+let data = []; // Initialize an empty array to hold your data
+
+let currentPage = 1;
+const rowsPerPage = 10;
+
+function displayTable(page) {
+  const tbody = document.querySelector('#dataTable tbody');
+  tbody.innerHTML = '';
+  const start = (page - 1) * rowsPerPage;
+  const end = page * rowsPerPage;
+  const paginatedData = data.slice(start, end);
+
+  for (const row of paginatedData) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${row.id}</td><td>${row.name}</td><td>${row.value}</td><td>${row.date}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('pageDisplay').textContent = page;
+}
+
+document.getElementById('prevPage').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    displayTable(currentPage);
+  }
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+  if (currentPage * rowsPerPage < data.length) {
+    currentPage++;
+    displayTable(currentPage);
+  }
+});
+
+// Initial display
+displayTable(currentPage);
+
+function fetchTableData() {
+  axios
+    .get('/api/data')
+    .then((response) => {
+      console.log('API Response:', response.data); // Debug: Log the entire response
+
+      // Adjust according to your API response structure
+      if (response.data && response.data.outLevel && Array.isArray(response.data.outLevel.series)) {
+        data = response.data.outLevel.series.map((item, index) => ({
+          id: index + 1,
+          name: response.data.outLevel.source, // Assuming 'source' is the name you want to display
+          value: item.value, // Adjust based on the actual structure of items in 'series'
+          date: new Date(item.timestamp).toLocaleString('id-ID', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+        }));
+        displayTable(currentPage); // Display the first page of data
+      } else {
+        console.error('tableData not found in response');
+        data = []; // Set data to an empty array as fallback
+        displayTable(currentPage);
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching table data:', error);
+    });
+}
+
+// Fungsi untuk mengambil status koneksi
+function fetchConnectionStatus() {
+  const statusElement = document.getElementById('connection-status');
+
+  axios
+    .get('http://localhost:9999/v1/devices/mandalika', {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+    .then((response) => {
+      if (response.status === 200) {
+        statusElement.innerText = 'connected';
+        statusElement.style.color = 'green';
+      } else {
+        statusElement.innerText = 'disconnected';
+        statusElement.style.color = 'red';
+      }
+    })
+    .catch((error) => {
+      statusElement.innerText = 'disconnected';
+      statusElement.style.color = 'red';
+    });
+}
+
+// Panggil fungsi ini ketika halaman selesai dimuat
+window.addEventListener('load', (event) => {
+  fetchConnectionStatus();
+  fetchGateStatus();
+});
+
 document.getElementById('pintu2-up').addEventListener('click', function () {
-  // Logic to send "Up" command for Pintu 1
-  console.log('Outlet Gate Up button clicked');
-  // Add your MQTT or AJAX call here
+  axios
+    .post(
+      'http://localhost:9999/v1/devices/mandalika/controls/out-gate',
+      {
+        command: 'OPEN',
+      },
+      {
+        headers: { Accept: 'application/json' },
+      }
+    )
+    .then((response) => {
+      console.log('Gate opened:', response.data);
+      fetchGateStatus(); // Update status after action
+    })
+    .catch((error) => {
+      console.error('Error opening gate:', error);
+    });
 });
 
 document.getElementById('pintu2-down').addEventListener('click', function () {
-  // Logic to send "Down" command for Pintu 1
-  console.log('Oulet Gate Down button clicked');
-  // Add your MQTT or AJAX call here
+  axios
+    .post(
+      'http://localhost:9999/v1/devices/mandalika/controls/out-gate',
+      {
+        command: 'CLOSE',
+      },
+      {
+        headers: { Accept: 'application/json' },
+      }
+    )
+    .then((response) => {
+      console.log('Gate closed:', response.data);
+      fetchGateStatus(); // Update status after action
+    })
+    .catch((error) => {
+      console.error('Error closing gate:', error);
+    });
 });
 
-/*
-  MQTT Message Handling Code
-*/
-
-// const mqttStatus = document.querySelector('.status');
-
-// function onConnect(message) {
-//   mqttStatus.textContent = 'Connected';
-// }
-// function onMessage(topic, message) {
-//   var stringResponse = message.toString();
-//   var messageResponse = JSON.parse(stringResponse);
-//   updateSensorReadings(messageResponse);
-// }
-
-// function onError(error) {
-//   console.log(`Error encountered :: ${error}`);
-//   mqttStatus.textContent = 'Error';
-// }
-
-// function onClose() {
-//   console.log(`MQTT connection closed!`);
-//   mqttStatus.textContent = 'Closed';
-// }
-
-// function fetchMQTTConnection() {
-//   fetch('/mqttConnDetails', {
-//     method: 'GET',
-//     headers: {
-//       'Content-type': 'application/json; charset=UTF-8',
-//     },
-//   })
-//     .then(function (response) {
-//       return response.json();
-//     })
-//     .then(function (data) {
-//       initializeMQTTConnection(data.mqttServer, data.mqttTopic);
-//     })
-//     .catch((error) => console.error('Error getting MQTT Connection :', error));
-// }
-// function initializeMQTTConnection(mqttServer, mqttTopic) {
-//   console.log(`Initializing connection to :: ${mqttServer}, topic :: ${mqttTopic}`);
-//   var fnCallbacks = { onConnect, onMessage, onError, onClose };
-
-//   var mqttService = new MQTTService(mqttServer, fnCallbacks);
-//   mqttService.connect();
-
-//   mqttService.subscribe(mqttTopic);
-// }
+function fetchGateStatus() {
+  axios
+    .get('http://localhost:9999/v1/devices/mandalika/controls/in-gate', {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+    .then((response) => {
+      if (response.status === 200) {
+        const gateStatus = response.data.status;
+        document.getElementById('gate-status').innerText = gateStatus;
+      } else {
+        document.getElementById('gate-status').innerText = 'Unknown';
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching gate status:', error);
+      document.getElementById('gate-status').innerText = 'Error';
+    });
+}

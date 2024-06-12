@@ -7,7 +7,8 @@
     <title><%= dashboardTitle %></title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Sharp" rel="stylesheet" />
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -45,14 +46,13 @@
         <h2><%= dashboardTitle %></h2>
         <h2>Status Ketinggian Air Inlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
         <h2>Status Ketinggian Air Outlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
-        <!-- <div class="connection-status">
-          <h2>Connection Status: <span class="status">Disconnected</span></h2>
-        </div> -->
+        <h2>Connection Status: <span id="connection-status">Checking connection...</span></h2>
         <div class="insights">
           <div class="pintu1">
             <div class="middle">
               <div class="left">
                 <h2>Inlet Gate</h2>
+                <h3>Ketinggian Air</h3>
                 <h1 id="pintu1"></h1>
               </div>
               <div class="icon">
@@ -65,7 +65,9 @@
             <div class="middle">
               <div class="left">
                 <h2>Outlet Gate</h2>
+                <h3>Ketinggian Air</h3>
                 <h1 id="pintu2"></h1>
+                `
               </div>
               <div class="icon">
                 <span class="material-symbols-sharp"> height </span>
@@ -90,16 +92,6 @@
           <div class="theme-toggler" style="display: none">
             <span class="material-symbols-sharp active"> light_mode </span>
             <span class="material-symbols-sharp"> dark_mode </span>
-          </div>
-        </div>
-        <!-- End of top -->
-        <div class="gauge-charts">
-          <h2>Gauge Charts</h2>
-          <div class="item">
-            <div id="pintu1-gauge"></div>
-          </div>
-          <div class="item">
-            <div id="pintu2-gauge"></div>
           </div>
         </div>
       </div>

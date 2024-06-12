@@ -7,7 +7,7 @@
     <title><%=dashboardTitle%></title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Sharp" rel="stylesheet" />
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -44,14 +44,14 @@
         <h1><%=name%></h1>
         <h2><%=dashboardTitle%></h2>
         <h2>Status Ketinggian Air Outlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
-        <div class="connection-status">
-          <h2>Connection Status: <span class="status">Disconnected</span></h2>
-        </div>
+        <h2>Status Outlet Gate: <span style="color: rgb(99, 209, 35)">Opened</span></h2>
+        <h2>Connection Status: <span id="connection-status">Checking connection...</span></h2>
         <div class="insights">
           <div class="pintu2">
             <div class="middle">
               <div class="left">
                 <h2>Outlet Gate</h2>
+                <h3>Ketinggian Air</h3>
                 <h1 id="pintu2"></h1>
               </div>
               <div class="icon">
@@ -108,60 +108,9 @@
           </div>
         </div>
         <!-- End of top -->
-        <div class="gauge-charts">
-          <h2>Gauge Charts</h2>
-          <div class="item">
-            <div id="pintu2-gauge"></div>
-          </div>
-        </div>
       </div>
     </div>
     <script type="module" src="./index2.js"></script>
     <!-- <script type="module" src="./mqttService.js"></script> -->
-    <script>
-      // JavaScript for pagination functionality
-      const data = [
-        // Sample data
-        { id: 1, name: 'Sensor 1', value: '23.4', date: '2024-06-01' },
-        { id: 2, name: 'Sensor 2', value: '19.8', date: '2024-06-01' },
-        // More sample data...
-      ];
-
-      let currentPage = 1;
-      const rowsPerPage = 10;
-
-      function displayTable(page) {
-        const tbody = document.querySelector('#dataTable tbody');
-        tbody.innerHTML = '';
-        const start = (page - 1) * rowsPerPage;
-        const end = page * rowsPerPage;
-        const paginatedData = data.slice(start, end);
-
-        for (const row of paginatedData) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${row.id}</td><td>${row.name}</td><td>${row.value}</td><td>${row.date}</td>`;
-          tbody.appendChild(tr);
-        }
-
-        document.getElementById('pageDisplay').textContent = page;
-      }
-
-      document.getElementById('prevPage').addEventListener('click', () => {
-        if (currentPage > 1) {
-          currentPage--;
-          displayTable(currentPage);
-        }
-      });
-
-      document.getElementById('nextPage').addEventListener('click', () => {
-        if (currentPage * rowsPerPage < data.length) {
-          currentPage++;
-          displayTable(currentPage);
-        }
-      });
-
-      // Initial display
-      displayTable(currentPage);
-    </script>
   </body>
 </html>

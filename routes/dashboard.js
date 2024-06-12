@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios'); // Menambahkan axios untuk memanggil API
 const fs = require('fs');
 
 function loadConfig() {
@@ -59,6 +60,49 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
     name: config.NAME,
     dashboardTitle: config.DASHBOARD_TITLE,
   });
+});
+
+// Endpoint to retrieve data from external REST API
+router.get('/api/data', isAuthenticated, async (req, res) => {
+  try {
+    const response1 = await axios.get('http://localhost:9999/v1/devices/mandalika/data/in-level', {
+      headers: { Accept: 'application/json' },
+    });
+    const response2 = await axios.get('http://localhost:9999/v1/devices/mandalika/data/out-level', {
+      headers: { Accept: 'application/json' },
+    });
+
+    res.json({
+      inLevel: response1.data,
+      outLevel: response2.data,
+    });
+  } catch (error) {
+    console.error('Error fetching data from external API:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
+
+// Route untuk handle kontrol pintu
+router.post('/api/data', isAuthenticated, async (req, res) => {
+  const { command } = req.body;
+  try {
+    const response1 = await axios.post(
+      `http://localhost:9999/v1/devices/mandalika/controls/in-gate`,
+      {
+        command: command,
+      },
+      {
+        headers: { Accept: 'application/json' },
+      }
+    );
+
+    res.json({
+      inlevelGate: response1.data,
+    });
+  } catch (error) {
+    console.error('Error fetching data from external API:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
 });
 
 // Pintu 1 page
