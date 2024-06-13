@@ -44,9 +44,19 @@
       <main>
         <h1><%= name %></h1>
         <h2><%= dashboardTitle %></h2>
-        <h2>Status Ketinggian Air Inlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
-        <h2>Status Ketinggian Air Outlet Gate: <span style="color: rgb(99, 209, 35)">Aman</span></h2>
+        <h2>Select Location:</h2>
+        <div class="dropdown">
+          <button class="dropbtn">Select Mandalika</button>
+          <div class="dropdown-content">
+            <a href="#" class="dropdown-item" data-device="<%= config.DEVICE_ID_1 %>">mandalika1</a>
+            <a href="#" class="dropdown-item" data-device="<%= config.DEVICE_ID_2 %>">mandalika2</a>
+            <a href="#" class="dropdown-item" data-device="<%= config.DEVICE_ID_3 %>">mandalika3</a>
+          </div>
+        </div>
+        <h2>Status Ketinggian Air Inlet Gate: <span id="status-inlet">Checking Status...</span></h2>
+        <h2>Status Ketinggian Air Outlet Gate: <span id="status-outlet">Checking Status...</span></h2>
         <h2>Connection Status: <span id="connection-status">Checking connection...</span></h2>
+
         <div class="insights">
           <div class="pintu1">
             <div class="middle">

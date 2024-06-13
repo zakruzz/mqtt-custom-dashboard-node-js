@@ -1,6 +1,11 @@
 {
   "NAME": "SI-TP Sistem Informasi Pintu Pengendali Banjir",
+  "HOMEPAGE_TITLE": "Homepage DEVICE",
   "DASHBOARD_TITLE": "Home DASHBOARD",
   "PINTU1_TITLE": "DASHBOARD Inlet Gate",
-  "PINTU2_TITLE": "DASHBOARD Outlet Gate"
+  "PINTU2_TITLE": "DASHBOARD Outlet Gate",
+  "LINK": "http://localhost:9999",
+  "DEVICE_ID_1": "mandalika",
+  "DEVICE_ID_2": "mandalika2",
+  "DEVICE_ID_3": "mandalika3"
 }

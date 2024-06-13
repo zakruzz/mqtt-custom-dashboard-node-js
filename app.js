@@ -1,20 +1,8 @@
 const express = require('express');
 const session = require('express-session');
-// const fs = require('fs');
+const bodyParser = require('body-parser');
 const app = express();
 const port = 3001;
-
-// function loadConfig() {
-//   try {
-//     const configData = fs.readFileSync('config.json', 'utf-8');
-//     return JSON.parse(configData);
-//   } catch (err) {
-//     console.error('Error reading config.json:', err);
-//     return {};
-//   }
-// }
-
-// const config = loadConfig();
 
 // Set the view engine to ejs
 app.set('view engine', 'ejs');
@@ -35,22 +23,14 @@ app.use(
   })
 );
 
+app.use(bodyParser.json());
+app.use((req, res, next) => {
+  next();
+});
+
 // Routes
 const dashboardRouter = require('./routes/dashboard');
 app.use('/', dashboardRouter); // Use the router for the root path
-
-function fetchConnectionStatus() {
-  const statusElement = document.getElementById('connection-status');
-
-  axios
-    .get('/connection-status')
-    .then((response) => {
-      statusElement.innerText = response.data.status;
-    })
-    .catch((error) => {
-      statusElement.innerText = 'disconnected';
-    });
-}
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

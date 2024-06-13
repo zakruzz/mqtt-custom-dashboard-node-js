@@ -174,9 +174,9 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
       return date.toLocaleString('id-ID', options); // Ganti 'id-ID' dengan locale yang diinginkan
     });
 
-    //console.log('pintu1:', pintu1); // Debug: Inspect pintu1
-    //console.log('pintu2:', pintu2); // Debug: Inspect pintu2
-    //console.log('timestamps:', timestamps); // Debug: Inspect timestamps
+    // console.log('pintu1:', pintu1); // Debug: Inspect pintu1
+    // console.log('pintu2:', pintu2); // Debug: Inspect pintu2
+    // console.log('timestamps:', timestamps); // Debug: Inspect timestamps
 
     updateBoxes(pintu1[pintu1.length - 1], pintu2[pintu2.length - 1]);
 
@@ -192,9 +192,50 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
 function updateBoxes(pintu1, pintu2) {
   let pintu1Div = document.getElementById('pintu1');
   let pintu2Div = document.getElementById('pintu2');
+  let pintu1Status = document.getElementById('status-inlet');
+  let pintu2Status = document.getElementById('status-outlet');
 
   pintu1Div.innerHTML = pintu1 + 'M';
   pintu2Div.innerHTML = pintu2 + 'M';
+
+  if (pintu1Status) {
+    pintu1Div.innerHTML = pintu1 + 'M';
+    if (pintu1 <= 200) {
+      pintu1Status.innerText = 'Aman';
+      pintu1Status.style.color = 'rgb(99, 209, 35)'; // Green
+    } else if (pintu1 <= 400) {
+      pintu1Status.innerText = 'Siaga 1';
+      pintu1Status.style.color = '#ffcc00';
+    } else if (pintu1 <= 600) {
+      pintu1Status.innerText = 'Siaga 2';
+      pintu1Status.style.color = '#ff6600';
+    } else {
+      pintu1Status.innerText = 'Bahaya';
+      pintu1Status.style.color = '#ff0000';
+    }
+  } else {
+    console.error('Inlet gate status element not found');
+  }
+
+  // Update the status based on the water level for Outlet Gate
+  if (pintu2Status) {
+    pintu2Div.innerHTML = pintu2 + 'M';
+    if (pintu2 <= 200) {
+      pintu2Status.innerText = 'Aman';
+      pintu2Status.style.color = 'rgb(99, 209, 35)'; // Green
+    } else if (pintu2 <= 400) {
+      pintu2Status.innerText = 'Siaga 1';
+      pintu2Status.style.color = '#ffcc00';
+    } else if (pintu2 <= 600) {
+      pintu2Status.innerText = 'Siaga 2';
+      pintu2Status.style.color = '#ff6600';
+    } else {
+      pintu2Status.innerText = 'Bahaya';
+      pintu2Status.style.color = '#ff0000';
+    }
+  } else {
+    console.error('Outlet gate status element not found');
+  }
 }
 
 // Function to update charts
@@ -271,11 +312,7 @@ function fetchConnectionStatus() {
   const statusElement = document.getElementById('connection-status');
 
   axios
-    .get('http://localhost:9999/v1/devices/mandalika', {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
+    .get('/api/data/connection')
     .then((response) => {
       if (response.status === 200) {
         statusElement.innerText = 'connected';
@@ -291,7 +328,18 @@ function fetchConnectionStatus() {
     });
 }
 
-// Panggil fungsi ini ketika halaman selesai dimuat
-window.addEventListener('load', (event) => {
-  fetchConnectionStatus();
+document.querySelectorAll('.dropdown-item').forEach((item) => {
+  item.addEventListener('click', function () {
+    const deviceId = this.getAttribute('data-device');
+    console.log(`Selected Device ID: ${deviceId}`); // Log the selected device ID for debugging
+    axios
+      .post('/api/select-device', { deviceId })
+      .then((response) => {
+        console.log(response.data);
+        location.reload();
+      })
+      .catch((error) => {
+        console.error('Error selecting device:', error);
+      });
+  });
 });

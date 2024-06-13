@@ -91,11 +91,7 @@ function fetchSensorData() {
   axios
     .get('/api/data')
     .then((response2) => {
-      //console.log('Response:', response2.data); // Debug: Inspect the response structure
-
       const { outLevel } = response2.data;
-      //console.log('inLevel:', inLevel);
-      //console.log('outLevel:', outLevel);
 
       updateSensorReadings(outLevel.series);
     })
@@ -114,8 +110,6 @@ let ctr = 0;
 
 // Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
 function updateSensorReadings(outLevelSeries) {
-  //console.log('outLevelSeries:', outLevelSeries); // Debug: Inspect outLevelSeries
-
   if (outLevelSeries) {
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = outLevelSeries.map((data) => {
@@ -132,9 +126,6 @@ function updateSensorReadings(outLevelSeries) {
       };
       return date.toLocaleString('id-ID', options); // Ganti 'id-ID' dengan locale yang diinginkan
     });
-    //console.log('pintu1:', pintu1); // Debug: Inspect pintu1
-    //console.log('pintu2:', pintu2); // Debug: Inspect pintu2
-    //console.log('timestamps:', timestamps); // Debug: Inspect timestamps
 
     updateBoxes(pintu2[pintu2.length - 1]);
 
@@ -147,15 +138,32 @@ function updateSensorReadings(outLevelSeries) {
 
 function updateBoxes(pintu2) {
   let pintu2Div = document.getElementById('pintu2');
+  let pintu2Status = document.getElementById('status-outlet');
 
-  pintu2Div.innerHTML = pintu2 + 'M';
+  if (pintu2Status) {
+    pintu2Div.innerHTML = pintu2 + 'M';
+    if (pintu2 <= 200) {
+      pintu2Status.innerText = 'Aman';
+      pintu2Status.style.color = 'rgb(99, 209, 35)'; // Green
+    } else if (pintu2 <= 400) {
+      pintu2Status.innerText = 'Siaga 1';
+      pintu2Status.style.color = '#ffcc00';
+    } else if (pintu2 <= 600) {
+      pintu2Status.innerText = 'Siaga 2';
+      pintu2Status.style.color = '#ff6600';
+    } else {
+      pintu2Status.innerText = 'Bahaya';
+      pintu2Status.style.color = '#ff0000';
+    }
+  } else {
+    console.error('Outlet gate status element not found');
+  }
 }
 
 // Function to update charts
 function updateCharts(lineChartDivId, xArray, yArray) {
   const lineChartDiv = document.getElementById(lineChartDivId);
   if (!lineChartDiv) {
-    //console.error(`Element with ID ${lineChartDivId} not found`);
     return;
   }
 
@@ -197,7 +205,6 @@ mediaQuery.addEventListener('change', function (e) {
 
 function handleDeviceChange(e) {
   if (e.matches) {
-    //console.log('Inside Mobile');
     var updateHistory = {
       width: 323,
       height: 250,
@@ -263,8 +270,6 @@ function fetchTableData() {
   axios
     .get('/api/data')
     .then((response) => {
-      console.log('API Response:', response.data); // Debug: Log the entire response
-
       // Adjust according to your API response structure
       if (response.data && response.data.outLevel && Array.isArray(response.data.outLevel.series)) {
         data = response.data.outLevel.series.map((item, index) => ({
@@ -297,11 +302,7 @@ function fetchConnectionStatus() {
   const statusElement = document.getElementById('connection-status');
 
   axios
-    .get('http://localhost:9999/v1/devices/mandalika', {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
+    .get('/api/data/connection')
     .then((response) => {
       if (response.status === 200) {
         statusElement.innerText = 'connected';
@@ -317,26 +318,42 @@ function fetchConnectionStatus() {
     });
 }
 
-// Panggil fungsi ini ketika halaman selesai dimuat
+// Call initializeSSE when the page loads
 window.addEventListener('load', (event) => {
+  initializeSSE();
   fetchConnectionStatus();
-  fetchGateStatus();
+  // fetchGateStatus();
 });
+
+// Function to initialize the SSE connection
+function initializeSSE() {
+  const eventSource = new EventSource('/events');
+
+  eventSource.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    if (data.type === 'GATE_STATUS') {
+      updateGateStatus(data.gate, data.status);
+    }
+  };
+
+  eventSource.onerror = function (event) {
+    console.error('SSE error:', event);
+  };
+}
+
+// Function to update the gate status in the DOM
+function updateGateStatus(gate, status) {
+  const statusElement = document.getElementById('gate-status');
+  if (gate === 'in-gate') {
+    statusElement.innerText = status;
+  }
+}
 
 document.getElementById('pintu2-up').addEventListener('click', function () {
   axios
-    .post(
-      'http://localhost:9999/v1/devices/mandalika/controls/out-gate',
-      {
-        command: 'OPEN',
-      },
-      {
-        headers: { Accept: 'application/json' },
-      }
-    )
+    .post('/api/data/out-gate/controlopen')
     .then((response) => {
       console.log('Gate opened:', response.data);
-      fetchGateStatus(); // Update status after action
     })
     .catch((error) => {
       console.error('Error opening gate:', error);
@@ -345,41 +362,27 @@ document.getElementById('pintu2-up').addEventListener('click', function () {
 
 document.getElementById('pintu2-down').addEventListener('click', function () {
   axios
-    .post(
-      'http://localhost:9999/v1/devices/mandalika/controls/out-gate',
-      {
-        command: 'CLOSE',
-      },
-      {
-        headers: { Accept: 'application/json' },
-      }
-    )
+    .post('/api/data/out-gate/controlclose')
     .then((response) => {
       console.log('Gate closed:', response.data);
-      fetchGateStatus(); // Update status after action
     })
     .catch((error) => {
       console.error('Error closing gate:', error);
     });
 });
 
-function fetchGateStatus() {
-  axios
-    .get('http://localhost:9999/v1/devices/mandalika/controls/in-gate', {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-    .then((response) => {
-      if (response.status === 200) {
-        const gateStatus = response.data.status;
-        document.getElementById('gate-status').innerText = gateStatus;
-      } else {
-        document.getElementById('gate-status').innerText = 'Unknown';
-      }
-    })
-    .catch((error) => {
-      console.error('Error fetching gate status:', error);
-      document.getElementById('gate-status').innerText = 'Error';
-    });
-}
+document.querySelectorAll('.dropdown-item').forEach((item) => {
+  item.addEventListener('click', function () {
+    const deviceId = this.getAttribute('data-device');
+    console.log(`Selected Device ID: ${deviceId}`); // Log the selected device ID for debugging
+    axios
+      .post('/api/select-device', { deviceId })
+      .then((response) => {
+        console.log(response.data);
+        location.reload();
+      })
+      .catch((error) => {
+        console.error('Error selecting device:', error);
+      });
+  });
+});

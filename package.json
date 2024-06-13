@@ -1,7 +1,7 @@
 {
   "name": "mqtt-custom-dashboard-node",
   "version": "1.0.0",
-  "description": "A custom MQTT dashboard built using Node.js that can be used to display sensor readings from a BME280 sensor",
+  "description": "A custom dashboard built using Node.js",
   "main": "index.js",
   "scripts": {
     "prod": "node app.js",
