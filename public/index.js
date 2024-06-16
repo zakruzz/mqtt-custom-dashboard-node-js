@@ -4,8 +4,6 @@ const menuBtn = document.querySelector('#menu-btn');
 const closeBtn = document.querySelector('#close-btn');
 const themeToggler = document.querySelector('.theme-toggler');
 
-let deviceId = null; // Global variable to store the selected device ID
-
 // Holds the background color of all chart
 var chartBGColor = getComputedStyle(document.body).getPropertyValue('--chart-background');
 var chartFontColor = getComputedStyle(document.body).getPropertyValue('--chart-font-color');
