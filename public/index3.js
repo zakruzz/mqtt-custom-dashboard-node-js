@@ -122,8 +122,7 @@ let newoutLevelYArray = [];
 let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
-// Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
-function updateSensorReadings(inLevelSeries) {
+function updateSensorReadings(inLevelSeries, outLevelSeries) {
   if (inLevelSeries) {
     const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = inLevelSeries.map((data) => {
@@ -140,12 +139,28 @@ function updateSensorReadings(inLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(pintu1[pintu1.length - 1]);
-
-    // Update Pintu 1 Line Chart
+    updateBoxes(pintu1[pintu1.length - 1], null);
     updateCharts('pintu1-history', timestamps, pintu1);
-  } else {
-    console.error('Series data is undefined');
+  }
+
+  if (outLevelSeries) {
+    const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
+    const timestamps = outLevelSeries.map((data) => {
+      const timestampInMilliseconds = data.timestamp;
+      const date = new Date(timestampInMilliseconds);
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      };
+      return date.toLocaleString('id-ID', options);
+    });
+
+    updateBoxes(null, pintu2[pintu2.length - 1]);
+    updateCharts('pintu2-history', timestamps, pintu2);
   }
 }
 
