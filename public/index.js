@@ -4,6 +4,8 @@ const menuBtn = document.querySelector('#menu-btn');
 const closeBtn = document.querySelector('#close-btn');
 const themeToggler = document.querySelector('.theme-toggler');
 
+let deviceId = null; // Global variable to store the selected device ID
+
 // Holds the background color of all chart
 var chartBGColor = getComputedStyle(document.body).getPropertyValue('--chart-background');
 var chartFontColor = getComputedStyle(document.body).getPropertyValue('--chart-font-color');
@@ -117,28 +119,17 @@ window.addEventListener('load', (event) => {
   Plotly.newPlot(inLevelHistoryDiv, [inLevelTrace], inLevelLayout, config);
   Plotly.newPlot(outLevelHistoryDiv, [outLevelTrace], outLevelLayout, config);
 
-  fetchSensorData();
+  // Setup SSE connections for device status
+  setupSSEConnMan1();
+  setupSSEConnMan2();
+
+  // Setup SSE connections for measurements
+  setupSSEMeasurementsMan1();
+  setupSSEMeasurementsMan2();
 
   // Run it initially
   handleDeviceChange(mediaQuery);
 });
-
-function fetchSensorData() {
-  axios
-    .get('/api/data')
-    .then((response) => {
-      // console.log('Response:', response.data); // Debug: Inspect the response structure
-
-      const { inLevel, outLevel } = response.data;
-      //console.log('inLevel:', inLevel);
-      //console.log('outLevel:', outLevel);
-
-      updateSensorReadings(inLevel.series, outLevel.series);
-    })
-    .catch((error) => {
-      console.error('Error fetching sensor data:', error);
-    });
-}
 
 // Pintu 1
 let newinLevelXArray = [];
@@ -152,16 +143,12 @@ let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
 // Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
+// Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
 function updateSensorReadings(inLevelSeries, outLevelSeries) {
-  // console.log('inLevelSeries:', inLevelSeries); // Debug: Inspect inLevelSeries
-  // console.log('outLevelSeries:', outLevelSeries); // Debug: Inspect outLevelSeries
-
-  if (inLevelSeries && outLevelSeries) {
+  if (inLevelSeries) {
     const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
-    const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = inLevelSeries.map((data) => {
-      // Konversi timestamp dari detik ke milidetik jika diperlukan
-      const timestampInMilliseconds = data.timestamp; // Jika data.timestamp sudah dalam milidetik, tidak perlu mengalikannya dengan 1000
+      const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
       const options = {
         year: 'numeric',
@@ -171,21 +158,31 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
         minute: '2-digit',
         second: '2-digit',
       };
-      return date.toLocaleString('id-ID', options); // Ganti 'id-ID' dengan locale yang diinginkan
+      return date.toLocaleString('id-ID', options);
     });
 
-    // console.log('pintu1:', pintu1); // Debug: Inspect pintu1
-    // console.log('pintu2:', pintu2); // Debug: Inspect pintu2
-    // console.log('timestamps:', timestamps); // Debug: Inspect timestamps
-
-    updateBoxes(pintu1[pintu1.length - 1], pintu2[pintu2.length - 1]);
-
-    // Update Pintu 1 Line Chart
+    updateBoxes(pintu1[pintu1.length - 1], null);
     updateCharts('pintu1-history', timestamps, pintu1);
-    // Update Pintu 2 Line Chart
+  }
+
+  if (outLevelSeries) {
+    const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
+    const timestamps = outLevelSeries.map((data) => {
+      const timestampInMilliseconds = data.timestamp;
+      const date = new Date(timestampInMilliseconds);
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      };
+      return date.toLocaleString('id-ID', options);
+    });
+
+    updateBoxes(null, pintu2[pintu2.length - 1]);
     updateCharts('pintu2-history', timestamps, pintu2);
-  } else {
-    console.error('Series data is undefined');
   }
 }
 
@@ -195,46 +192,42 @@ function updateBoxes(pintu1, pintu2) {
   let pintu1Status = document.getElementById('status-inlet');
   let pintu2Status = document.getElementById('status-outlet');
 
-  pintu1Div.innerHTML = pintu1 + 'M';
-  pintu2Div.innerHTML = pintu2 + 'M';
-
-  if (pintu1Status) {
+  if (pintu1 !== null) {
     pintu1Div.innerHTML = pintu1 + 'M';
-    if (pintu1 <= 200) {
-      pintu1Status.innerText = 'Aman';
-      pintu1Status.style.color = 'rgb(99, 209, 35)'; // Green
-    } else if (pintu1 <= 400) {
-      pintu1Status.innerText = 'Siaga 1';
-      pintu1Status.style.color = '#ffcc00';
-    } else if (pintu1 <= 600) {
-      pintu1Status.innerText = 'Siaga 2';
-      pintu1Status.style.color = '#ff6600';
-    } else {
-      pintu1Status.innerText = 'Bahaya';
-      pintu1Status.style.color = '#ff0000';
+    if (pintu1Status) {
+      if (pintu1 <= 200) {
+        pintu1Status.innerText = 'Aman';
+        pintu1Status.style.color = 'rgb(99, 209, 35)'; // Green
+      } else if (pintu1 <= 400) {
+        pintu1Status.innerText = 'Siaga 1';
+        pintu1Status.style.color = '#ffcc00';
+      } else if (pintu1 <= 600) {
+        pintu1Status.innerText = 'Siaga 2';
+        pintu1Status.style.color = '#ff6600';
+      } else {
+        pintu1Status.innerText = 'Bahaya';
+        pintu1Status.style.color = '#ff0000';
+      }
     }
-  } else {
-    console.error('Inlet gate status element not found');
   }
 
-  // Update the status based on the water level for Outlet Gate
-  if (pintu2Status) {
+  if (pintu2 !== null) {
     pintu2Div.innerHTML = pintu2 + 'M';
-    if (pintu2 <= 200) {
-      pintu2Status.innerText = 'Aman';
-      pintu2Status.style.color = 'rgb(99, 209, 35)'; // Green
-    } else if (pintu2 <= 400) {
-      pintu2Status.innerText = 'Siaga 1';
-      pintu2Status.style.color = '#ffcc00';
-    } else if (pintu2 <= 600) {
-      pintu2Status.innerText = 'Siaga 2';
-      pintu2Status.style.color = '#ff6600';
-    } else {
-      pintu2Status.innerText = 'Bahaya';
-      pintu2Status.style.color = '#ff0000';
+    if (pintu2Status) {
+      if (pintu2 <= 200) {
+        pintu2Status.innerText = 'Aman';
+        pintu2Status.style.color = 'rgb(99, 209, 35)'; // Green
+      } else if (pintu2 <= 400) {
+        pintu2Status.innerText = 'Siaga 1';
+        pintu2Status.style.color = '#ffcc00';
+      } else if (pintu2 <= 600) {
+        pintu2Status.innerText = 'Siaga 2';
+        pintu2Status.style.color = '#ff6600';
+      } else {
+        pintu2Status.innerText = 'Bahaya';
+        pintu2Status.style.color = '#ff0000';
+      }
     }
-  } else {
-    console.error('Outlet gate status element not found');
   }
 }
 
@@ -242,18 +235,12 @@ function updateBoxes(pintu1, pintu2) {
 function updateCharts(lineChartDivId, xArray, yArray) {
   const lineChartDiv = document.getElementById(lineChartDivId);
   if (!lineChartDiv) {
-    //console.error(`Element with ID ${lineChartDivId} not found`);
     return;
   }
 
   const data_update = { x: [xArray], y: [yArray] };
   Plotly.update(lineChartDiv, data_update);
 }
-
-// Ensure fetchSensorData is called after the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', (event) => {
-  fetchSensorData();
-});
 
 function updateChartsBackground() {
   // updates the background color of historical charts
@@ -302,44 +289,164 @@ function handleDeviceChange(e) {
   }
 }
 
-// Panggil fungsi ini ketika halaman selesai dimuat
-window.addEventListener('load', (event) => {
-  fetchConnectionStatus();
-});
+function setupSSEMeasurementsMan1() {
+  const eventSource = new EventSource(`/api/measurementsEvents/mandalika1`);
 
-// Fungsi untuk mengambil status koneksi
-function fetchConnectionStatus() {
-  const statusElement = document.getElementById('connection-status');
+  eventSource.addEventListener('measurement-data', (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Received measurement data for mandalika1:', data);
 
-  axios
-    .get('/api/data/connection')
-    .then((response) => {
-      if (response.status === 200) {
-        statusElement.innerText = 'connected';
-        statusElement.style.color = 'green';
-      } else {
-        statusElement.innerText = 'disconnected';
-        statusElement.style.color = 'red';
-      }
-    })
-    .catch((error) => {
-      statusElement.innerText = 'disconnected';
-      statusElement.style.color = 'red';
-    });
+    updateSensorReadings(data.series, null); // Assuming data structure has a property 'series' for the measurements
+  });
+
+  eventSource.onerror = (error) => {
+    console.error('Error with SSE for measurements mandalika1:', error);
+  };
 }
 
-document.querySelectorAll('.dropdown-item').forEach((item) => {
-  item.addEventListener('click', function () {
-    const deviceId = this.getAttribute('data-device');
-    console.log(`Selected Device ID: ${deviceId}`); // Log the selected device ID for debugging
+function setupSSEMeasurementsMan2() {
+  const eventSource = new EventSource(`/api/measurementsEvents/mandalika2`);
+
+  eventSource.addEventListener('measurement-data', (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Received measurement data for mandalika2:', data);
+
+    updateSensorReadings(null, data.series); // Assuming data structure has a property 'series' for the measurements
+  });
+
+  eventSource.onerror = (error) => {
+    console.error('Error with SSE for measurements mandalika2:', error);
+  };
+}
+
+function pollDeviceStatusMandalika1() {
+  setInterval(() => {
     axios
-      .post('/api/select-device', { deviceId })
+      .get(`/api/devicesStatus/mandalika1`)
       .then((response) => {
-        console.log(response.data);
-        location.reload();
+        const data = response.data;
+        console.log('Polling response:', data);
+
+        const statusElement = document.getElementById('connection-status1');
+        if (data.currentState === 'CONNECTED') {
+          statusElement.innerText = 'CONNECTED';
+          statusElement.style.color = 'green';
+        } else if (data.currentState === 'DISCONNECTED') {
+          statusElement.innerText = 'DISCONNECTED';
+          statusElement.style.color = 'red';
+        } else {
+          statusElement.innerText = 'UNKNOWN';
+          statusElement.style.color = 'grey';
+        }
       })
       .catch((error) => {
-        console.error('Error selecting device:', error);
+        console.error('Error polling device status:', error);
+        const statusElement = document.getElementById('connection-status1');
+        statusElement.innerText = 'DISCONNECTED';
+        statusElement.style.color = 'red';
       });
+  }, 30000); // Setiap 30 detik
+}
+
+function pollDeviceStatusMandalika2() {
+  setInterval(() => {
+    axios
+      .get(`/api/devicesStatus/mandalika2`)
+      .then((response) => {
+        const data = response.data;
+        console.log('Polling response:', data);
+
+        const statusElement = document.getElementById('connection-status2');
+        if (data.currentState === 'CONNECTED') {
+          statusElement.innerText = 'CONNECTED';
+          statusElement.style.color = 'green';
+        } else if (data.currentState === 'DISCONNECTED') {
+          statusElement.innerText = 'DISCONNECTED';
+          statusElement.style.color = 'red';
+        } else {
+          statusElement.innerText = 'UNKNOWN';
+          statusElement.style.color = 'grey';
+        }
+      })
+      .catch((error) => {
+        console.error('Error polling device status:', error);
+        const statusElement = document.getElementById('connection-status2');
+        statusElement.innerText = 'DISCONNECTED';
+        statusElement.style.color = 'red';
+      });
+  }, 30000); // Setiap 30 detik
+}
+
+function setupSSEConnMan1() {
+  if (window.eventSource) {
+    window.eventSource.close();
+  }
+
+  window.eventSource = new EventSource(`/api/devicesEvents/mandalika1`);
+
+  window.eventSource.addEventListener('device-status-change', (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Received SSE data:', data);
+
+    const statusElement = document.getElementById('connection-status1');
+    if (data.currentState) {
+      if (data.currentState === 'CONNECTED') {
+        statusElement.innerText = 'connected';
+        statusElement.style.color = 'green';
+      } else if (data.currentState === 'DISCONNECTED') {
+        statusElement.innerText = 'disconnected';
+        statusElement.style.color = 'red';
+      } else {
+        statusElement.innerText = 'unknown';
+        statusElement.style.color = 'grey';
+      }
+    } else {
+      statusElement.innerText = 'unknown';
+      statusElement.style.color = 'grey';
+    }
   });
-});
+
+  window.eventSource.onerror = (error) => {
+    console.error('Error with SSE:', error);
+  };
+
+  // Mulai polling status perangkat
+  pollDeviceStatusMandalika1();
+}
+
+function setupSSEConnMan2() {
+  if (window.eventSource) {
+    window.eventSource.close();
+  }
+
+  window.eventSource = new EventSource(`/api/devicesEvents/mandalika2`);
+
+  window.eventSource.addEventListener('device-status-change', (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Received SSE data:', data);
+
+    const statusElement = document.getElementById('connection-status2');
+    if (data.currentState) {
+      if (data.currentState === 'CONNECTED') {
+        statusElement.innerText = 'connected';
+        statusElement.style.color = 'green';
+      } else if (data.currentState === 'DISCONNECTED') {
+        statusElement.innerText = 'disconnected';
+        statusElement.style.color = 'red';
+      } else {
+        statusElement.innerText = 'unknown';
+        statusElement.style.color = 'grey';
+      }
+    } else {
+      statusElement.innerText = 'unknown';
+      statusElement.style.color = 'grey';
+    }
+  });
+
+  window.eventSource.onerror = (error) => {
+    console.error('Error with SSE:', error);
+  };
+
+  // Mulai polling status perangkat
+  pollDeviceStatusMandalika2();
+}

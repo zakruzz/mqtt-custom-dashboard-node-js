@@ -4,8 +4,8 @@
   "DASHBOARD_TITLE": "Home DASHBOARD",
   "PINTU1_TITLE": "DASHBOARD Inlet Gate",
   "PINTU2_TITLE": "DASHBOARD Outlet Gate",
-  "LINK": "http://localhost:9999",
-  "DEVICE_ID_1": "mandalika",
+  "LINK": "http://localhost:8080",
+  "DEVICE_ID_1": "mandalika1",
   "DEVICE_ID_2": "mandalika2",
   "DEVICE_ID_3": "mandalika3"
 }

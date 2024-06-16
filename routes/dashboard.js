@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios'); // Menambahkan axios untuk memanggil API
+const axios = require('axios');
 const fs = require('fs');
 
 function loadConfig() {
@@ -63,75 +63,390 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
   });
 });
 
-router.get('/api/data', isAuthenticated, async (req, res) => {
-  try {
-    const deviceId = req.session.selectedDevice || config.DEVICE_ID_1;
-    const response1 = await axios.get(`${config.LINK}/v1/devices/${deviceId}/data/in-level`, {
-      headers: { Accept: 'application/json' },
-    });
-    const response2 = await axios.get(`${config.LINK}/v1/devices/${deviceId}/data/out-level`, {
-      headers: { Accept: 'application/json' },
-    });
+// SSE route for mandalika1 measurements
+router.get('/api/measurementsEvents/mandalika1', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
 
-    res.json({
-      inLevel: response1.data,
-      outLevel: response2.data,
+  const client = { res, deviceId: 'mandalika1' };
+  measurementClients.push(client);
+
+  // Send a ping to keep the connection alive
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    measurementClients = measurementClients.filter((c) => c.res !== res);
+  });
+});
+
+// SSE route for mandalika2 measurements
+router.get('/api/measurementsEvents/mandalika2', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const client = { res, deviceId: 'mandalika2' };
+  measurementClients.push(client);
+
+  // Send a ping to keep the connection alive
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    measurementClients = measurementClients.filter((c) => c.res !== res);
+  });
+});
+
+let measurementClients = [];
+
+// Function to send measurement events to all connected clients
+function sendMeasurementEvent(deviceId, data) {
+  measurementClients.forEach((client) => {
+    if (client.deviceId === deviceId) {
+      client.res.write(`event: measurement-data\ndata: ${JSON.stringify(data)}\n\n`);
+    }
+  });
+}
+
+// Fetch and send measurement data periodically for mandalika1
+setInterval(async () => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika1/measurements/waterlevel/data`, {
+      headers: { Accept: 'application/json' },
     });
+    sendMeasurementEvent('mandalika1', response.data);
   } catch (error) {
-    console.error('Error fetching data from external API:', error);
-    res.status(500).json({ error: 'Failed to fetch data' });
+    console.error('Error fetching measurement data for mandalika1:', error);
+  }
+}, 10000); // Adjust the interval as needed
+
+// Fetch and send measurement data periodically for mandalika2
+setInterval(async () => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika2/measurements/waterlevel/data`, {
+      headers: { Accept: 'application/json' },
+    });
+    sendMeasurementEvent('mandalika2', response.data);
+  } catch (error) {
+    console.error('Error fetching measurement data for mandalika2:', error);
+  }
+}, 10000); // Adjust the interval as needed
+
+//CONNECTION//
+// Retrieve all registered nodes
+router.get('/api/devices', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices?page=0&size=20`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching devices:', error);
+    res.status(500).json({ error: 'Failed to fetch devices' });
   }
 });
 
-// Endpoint to retrieve data from external REST API
-router.get('/api/data/connection', isAuthenticated, async (req, res) => {
+//STATUS//
+
+//mandalika1
+// Retrieve single registered node
+router.get('/api/devicesSingleMandalika1', isAuthenticated, async (req, res) => {
   try {
-    const deviceId = req.session.selectedDevice || config.DEVICE_ID_1;
-    const response1 = await axios.get(`${config.LINK}/v1/devices/${deviceId}`, {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika1`, {
       headers: { Accept: 'application/json' },
     });
-
-    res.json({
-      Status: response1.status,
-    });
+    res.json(response.data);
   } catch (error) {
-    console.error('Error fetching data from external API:', error);
-    res.status(500).json({ error: 'Failed to fetch data' });
+    console.error('Error fetching device:', error);
+    res.status(500).json({ error: 'Failed to fetch device' });
   }
 });
 
-const clients = [];
-
-router.get('/events', isAuthenticated, (req, res) => {
+// Subscribe for node state changed events
+// Mandalika1: Subscribe for node state changed events
+router.get('/api/devicesEvents/mandalika1', isAuthenticated, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
   // Add the new client to the clients array
-  clients.push(res);
+  const client = { res, deviceId: 'mandalika1' };
+  clients.push(client);
+
+  // Send a ping to keep the connection alive
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
 
   // Handle client disconnect
   req.on('close', () => {
-    clients.splice(clients.indexOf(res), 1);
+    clearInterval(keepAliveInterval);
+    clients = clients.filter((c) => c.res !== res);
+  });
+});
+
+// Retrieve current status of device or node
+router.get('/api/devicesStatus/mandalika1', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika1/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    console.log('Device status response:', response.data); // Tambahkan ini untuk debug
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching device status:', error);
+    res.status(500).json({ error: 'Failed to fetch device status' });
+  }
+});
+
+// Retrieve current status of device or node
+router.get('/api/devicesStatus/mandalika1', isAuthenticated, async (req, res) => {
+  try {
+    // Misalnya, kita menganggap respons 200 sebagai indikator koneksi berhasil
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika1/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json({ currentState: 'CONNECTED' });
+  } catch (error) {
+    console.error('Error fetching device status:', error);
+    res.json({ currentState: 'DISCONNECTED' });
+  }
+});
+
+// Subscribe for node state changed events
+router.get('/api/devicesEvents/mandalika1', isAuthenticated, (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Add the new client to the clients array
+    const client = { res };
+    clients.push(client);
+
+    // Send a ping to keep the connection alive
+    const keepAliveInterval = setInterval(() => {
+      res.write(': keep-alive\n\n');
+    }, 20000);
+
+    // Handle client disconnect
+    req.on('close', () => {
+      clearInterval(keepAliveInterval);
+      clients = clients.filter((c) => c.res !== res);
+    });
+  } catch (error) {
+    console.error('Error in SSE endpoint:', error); // Log the error details
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+let clients = [];
+
+// Function to send events to all connected clients
+function sendEventConnectmandalika1(data) {
+  clients.forEach((client) => {
+    if (client.mandalika1 === data.mandalika1) {
+      client.res.write(`event: device-status-change\ndata: ${JSON.stringify(data)}\n\n`);
+      console.log(`Event sent to device ID: mandalika1 with data: ${JSON.stringify(data)}`); // Tambahkan log ini
+    }
+  });
+}
+
+//mandalika 2
+// Retrieve single registered node
+router.get('/api/devicesSingleMandalika2', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika2`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching device:', error);
+    res.status(500).json({ error: 'Failed to fetch device' });
+  }
+});
+
+// Mandalika2: Subscribe for node state changed events
+router.get('/api/devicesEvents/mandalika2', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Add the new client to the clients array
+  const client = { res, deviceId: 'mandalika2' };
+  clients.push(client);
+
+  // Send a ping to keep the connection alive
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    clients = clients.filter((c) => c.res !== res);
+  });
+});
+
+// Retrieve current status of device or node
+router.get('/api/devicesStatus/mandalika2', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika2/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    console.log('Device status response:', response.data); // Tambahkan ini untuk debug
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching device status:', error);
+    res.status(500).json({ error: 'Failed to fetch device status' });
+  }
+});
+
+// Retrieve current status of device or node
+router.get('/api/devicesStatus/mandalika2', isAuthenticated, async (req, res) => {
+  try {
+    // Misalnya, kita menganggap respons 200 sebagai indikator koneksi berhasil
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika2/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json({ currentState: 'CONNECTED' });
+  } catch (error) {
+    console.error('Error fetching device status:', error);
+    res.json({ currentState: 'DISCONNECTED' });
+  }
+});
+
+// Subscribe for node state changed events
+router.get('/api/devicesEvents/mandalika2', isAuthenticated, (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Add the new client to the clients array
+    const client = { res };
+    clients.push(client);
+
+    // Send a ping to keep the connection alive
+    const keepAliveInterval = setInterval(() => {
+      res.write(': keep-alive\n\n');
+    }, 20000);
+
+    // Handle client disconnect
+    req.on('close', () => {
+      clearInterval(keepAliveInterval);
+      clients = clients.filter((c) => c.res !== res);
+    });
+  } catch (error) {
+    console.error('Error in SSE endpoint:', error); // Log the error details
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Function to send events to all connected clients
+function sendEventConnectmandalika2(data) {
+  clients.forEach((client) => {
+    if (client.mandalika2 === data.mandalika2) {
+      client.res.write(`event: device-status-change\ndata: ${JSON.stringify(data)}\n\n`);
+      console.log(`Event sent to device ID: mandalika2 with data: ${JSON.stringify(data)}`); // Tambahkan log ini
+    }
+  });
+}
+
+//CONTROLL//
+
+//MANDALIKA1//
+// Retrieve the current control status of mandalika1
+router.get('/api/controlStatus/mandalika1', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika1/controls/watergate/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching control status:', error);
+    res.status(500).json({ error: 'Failed to fetch control status' });
+  }
+});
+
+//MANDALIKA2//
+router.get('/api/controlStatus/mandalika2', isAuthenticated, async (req, res) => {
+  try {
+    // Misalnya, kita menganggap respons 200 sebagai indikator koneksi berhasil
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika2/controls/watergate/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching device status:', error);
+    res.json({ currentState: 'FAILED' });
+  }
+});
+
+//DEVICE CHANGE STATUS//
+// MANDALIKA 1 //
+function exampleStateChangeEventMandalika1(deviceId, state) {
+  const event = { type: 'device-status-change', deviceId, currentState: state };
+  sendEventConnectmandalika1(event);
+}
+
+// MANDALIKA 2 //
+function exampleStateChangeEventMandalika2(deviceId, state) {
+  const event = { type: 'device-status-change', deviceId, currentState: state };
+  sendEventConnectmandalika2(event);
+}
+
+// Subscribe for device state change events
+router.get('/api/devicesEventsControlsMandalika1', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const client = { res };
+  clients.push(client);
+
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    clients = clients.filter((c) => c.res !== res);
   });
 });
 
 // Function to send events to all connected clients
-function sendEvent(data) {
+function sendEventControlMandalika1(data) {
   clients.forEach((client) => {
-    client.write(`data: ${JSON.stringify(data)}\n\n`);
+    if (client.mandalika1 === data.mandalika1) {
+      client.res.write(`event: control-status-change\ndata: ${JSON.stringify(data)}\n\n`);
+      console.log(`Event sent to device ID: mandalika1 with data: ${JSON.stringify(data)}`); // Tambahkan log ini
+    }
   });
 }
 
+// Example: Triggering an event (this should be called where appropriate in your code)
+function StateControlMandalika1ChangeEvent(state) {
+  const event = { type: 'control-status-change', currentState: state };
+  sendEventControlMandalika1(event);
+}
 // Update your /api/data/controlopen and /api/data/controlclose endpoints to use sendEvent
 
+// Membuka pintu inlet
 router.post('/api/data/in-gate/controlopen', isAuthenticated, async (req, res) => {
   try {
-    const deviceId = req.session.selectedDevice || config.DEVICE_ID_1;
-    const response1 = await axios.post(`${config.LINK}/v1/devices/${deviceId}/controls/in-gate`, { command: 'OPEN' }, { headers: { Accept: 'application/json' } });
+    const response1 = await axios.post(`${config.LINK}/v1/devices/mandalika1/controls/watergate/commands`, { value: 'OPEN' }, { headers: { Accept: 'application/json' } });
 
-    // Send event to all clients
-    sendEvent({ type: 'GATE_STATUS', gate: 'in-gate', status: 'OPENED' });
+    // Trigger the event
+    StateControlMandalika1ChangeEvent('OPENED');
 
     res.json({ Gate: response1.data });
   } catch (error) {
@@ -140,13 +455,13 @@ router.post('/api/data/in-gate/controlopen', isAuthenticated, async (req, res) =
   }
 });
 
+// Menutup pintu inlet
 router.post('/api/data/in-gate/controlclose', isAuthenticated, async (req, res) => {
   try {
-    const deviceId = req.session.selectedDevice || config.DEVICE_ID_1;
-    const response1 = await axios.post(`${config.LINK}/v1/devices/${deviceId}/controls/in-gate`, { command: 'CLOSE' }, { headers: { Accept: 'application/json' } });
+    const response1 = await axios.post(`${config.LINK}/v1/devices/mandalika1/controls/watergate/commands`, { value: 'CLOSE' }, { headers: { Accept: 'application/json' } });
 
-    // Send event to all clients
-    sendEvent({ type: 'GATE_STATUS', gate: 'in-gate', status: 'CLOSED' });
+    // Trigger the event
+    StateControlMandalika1ChangeEvent('CLOSED');
 
     res.json({ Gate: response1.data });
   } catch (error) {
@@ -155,13 +470,49 @@ router.post('/api/data/in-gate/controlclose', isAuthenticated, async (req, res) 
   }
 });
 
+// Subscribe for device state change events for mandalika2
+router.get('/api/devicesEventsControlsMandalika2', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const client = { res };
+  clients.push(client);
+
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    clients = clients.filter((c) => c.res !== res);
+  });
+});
+
+// Function to send events to all connected clients
+function sendEventControlMandalika2(data) {
+  clients.forEach((client) => {
+    if (client.mandalika2 === data.mandalika2) {
+      client.res.write(`event: control-status-change\ndata: ${JSON.stringify(data)}\n\n`);
+      console.log(`Event sent to device ID: mandalika2 with data: ${JSON.stringify(data)}`); // Tambahkan log ini
+    }
+  });
+}
+
+// Example: Triggering an event (this should be called where appropriate in your code)
+function StateControlMandalika2ChangeEvent(state) {
+  const event = { type: 'control-status-change', deviceId: 'mandalika2', currentState: state };
+  sendEventControlMandalika2(event);
+}
+// Update your /api/data/controlopen and /api/data/controlclose endpoints to use sendEvent
+
+// Membuka pintu inlet
 router.post('/api/data/out-gate/controlopen', isAuthenticated, async (req, res) => {
   try {
-    const deviceId = req.session.selectedDevice || config.DEVICE_ID_1;
-    const response1 = await axios.post(`${config.LINK}/v1/devices/${deviceId}/controls/out-gate`, { command: 'OPEN' }, { headers: { Accept: 'application/json' } });
+    const response1 = await axios.post(`${config.LINK}/v1/devices/mandalika2/controls/watergate/commands`, { value: 'OPEN' }, { headers: { Accept: 'application/json' } });
 
-    // Send event to all clients
-    sendEvent({ type: 'GATE_STATUS', gate: 'out-gate', status: 'OPENED' });
+    // Trigger the event
+    StateControlMandalika2ChangeEvent('OPENED');
 
     res.json({ Gate: response1.data });
   } catch (error) {
@@ -170,13 +521,13 @@ router.post('/api/data/out-gate/controlopen', isAuthenticated, async (req, res) 
   }
 });
 
+// Menutup pintu inlet
 router.post('/api/data/out-gate/controlclose', isAuthenticated, async (req, res) => {
   try {
-    const deviceId = req.session.selectedDevice || config.DEVICE_ID_1;
-    const response1 = await axios.post(`${config.LINK}/v1/devices/${deviceId}/controls/out-gate`, { command: 'CLOSE' }, { headers: { Accept: 'application/json' } });
+    const response1 = await axios.post(`${config.LINK}/v1/devices/mandalika2/controls/watergate/commands`, { value: 'CLOSE' }, { headers: { Accept: 'application/json' } });
 
-    // Send event to all clients
-    sendEvent({ type: 'GATE_STATUS', gate: 'out-gate', status: 'CLOSED' });
+    // Trigger the event
+    StateControlMandalika2ChangeEvent('CLOSED');
 
     res.json({ Gate: response1.data });
   } catch (error) {
@@ -184,6 +535,7 @@ router.post('/api/data/out-gate/controlclose', isAuthenticated, async (req, res)
     res.status(500).json({ error: 'Failed to fetch data' });
   }
 });
+
 // Pintu 1 page
 router.get('/pintu1', isAuthenticated, (req, res) => {
   res.render('pages/pintu1', {
@@ -200,19 +552,6 @@ router.get('/pintu2', isAuthenticated, (req, res) => {
     dashboardTitle: config.PINTU2_TITLE,
     config: config,
   });
-});
-
-router.post('/api/select-device', isAuthenticated, (req, res) => {
-  const { deviceId } = req.body;
-  //console.log(`Device ID received from frontend: ${deviceId}`); // Log the received device ID from frontend
-  if (deviceId) {
-    req.session.selectedDevice = deviceId;
-    //console.log(`Device ID stored in session: ${deviceId}`); // Log the stored device ID in session
-    res.json({ message: 'Device selected successfully' });
-  } else {
-    console.error('No Device ID received'); // Log an error if no device ID is received
-    res.status(400).json({ error: 'No Device ID received' });
-  }
 });
 
 module.exports = router;
