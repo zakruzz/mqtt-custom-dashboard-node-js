@@ -120,27 +120,7 @@ let newoutLevelYArray = [];
 let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
-function updateSensorReadings(inLevelSeries, outLevelSeries) {
-  if (inLevelSeries) {
-    const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
-    const timestamps = inLevelSeries.map((data) => {
-      const timestampInMilliseconds = data.timestamp;
-      const date = new Date(timestampInMilliseconds);
-      const options = {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      };
-      return date.toLocaleString('id-ID', options);
-    });
-
-    updateBoxes(pintu1[pintu1.length - 1], null);
-    updateCharts('pintu1-history', timestamps, pintu1);
-  }
-
+function updateSensorReadings(outLevelSeries) {
   if (outLevelSeries) {
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = outLevelSeries.map((data) => {
@@ -157,7 +137,7 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(null, pintu2[pintu2.length - 1]);
+    updateBoxes(pintu2[pintu2.length - 1]);
     updateCharts('pintu2-history', timestamps, pintu2);
   }
 }
@@ -324,7 +304,7 @@ function pollDeviceStatusMandalika2() {
         statusElement.innerText = 'disconnected';
         statusElement.style.color = 'red';
       });
-  }, 30000); // Setiap 30 detik
+  }, 10000); // Setiap 30 detik
 }
 
 function setupSSEConnMan2() {

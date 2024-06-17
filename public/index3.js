@@ -327,7 +327,7 @@ function pollDeviceStatusMandalika1() {
         statusElement.innerText = 'disconnected';
         statusElement.style.color = 'red';
       });
-  }, 30000); // Setiap 30 detik
+  }, 10000); // Setiap 30 detik
 }
 
 function setupSSEConnMan1() {

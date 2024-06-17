@@ -343,7 +343,7 @@ function pollDeviceStatusMandalika1() {
         statusElement.innerText = 'DISCONNECTED';
         statusElement.style.color = 'red';
       });
-  }, 30000); // Setiap 30 detik
+  }, 10000); // Setiap 30 detik
 }
 
 function pollDeviceStatusMandalika2() {
@@ -372,7 +372,7 @@ function pollDeviceStatusMandalika2() {
         statusElement.innerText = 'DISCONNECTED';
         statusElement.style.color = 'red';
       });
-  }, 30000); // Setiap 30 detik
+  }, 10000); // Setiap 30 detik
 }
 
 function setupSSEConnMan1() {
