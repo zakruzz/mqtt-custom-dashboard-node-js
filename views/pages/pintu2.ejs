@@ -44,14 +44,14 @@
         <h1><%=name%></h1>
         <h2><%=dashboardTitle%></h2>
         <h2>Status Outlet Water Level: <span id="status-outlet">Checking Status...</span></h2>
-        <h2>Status inlet Gate: <span id="gate-status"></span></h2>
+        <h2>Status Inlet Gate: <span id="gate-status"></span></h2>
+        <h2>Status Relay Inlet Gate: <span id="relay-status"></span></h2>
         <h2>Connection Status Mandalika 2 : <span id="connection-status2">Checking connection...</span></h2>
         <div class="insights">
           <div class="pintu2">
             <div class="middle">
               <div class="left">
-                <h2>Outlet Gate</h2>
-                <h3>Ketinggian Air</h3>
+                <h3>Level Air</h3>
                 <h1 id="pintu2"></h1>
               </div>
               <div class="icon">
@@ -59,13 +59,23 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="controls">
-            <P style="font-size: 16px; margin-top: 4px"><b>Kontrol Outlet Gate</b></P>
+        <!-- Control Cards -->
+        <div class="controls-container">
+          <div class="card controls">
+            <h2>Kontrol Outlet Gate</h2>
             <button id="pintu2-up" class="control-btn">Open</button>
             <button id="pintu2-down" class="control-btn">Close</button>
           </div>
+
+          <div class="card controls">
+            <h2>Kontrol Start/Stop Relay</h2>
+            <button id="relay-on" class="control-btn">Start</button>
+            <button id="relay-off" class="control-btn">Stop</button>
+          </div>
         </div>
+
         <!-- End of Insights -->
         <div class="histories">
           <div class="history-charts-pintu1">

@@ -9,6 +9,8 @@ var chartBGColor = getComputedStyle(document.body).getPropertyValue('--chart-bac
 var chartFontColor = getComputedStyle(document.body).getPropertyValue('--chart-font-color');
 var chartAxisColor = getComputedStyle(document.body).getPropertyValue('--chart-axis-color');
 
+let relayStatus = 'STOPPED'; // Variable to track the relay status
+
 /*
   Event listeners for any HTML click
 */
@@ -90,6 +92,9 @@ window.addEventListener('load', (event) => {
   // Setup SSE for control status (if needed)
   setupSSEControlMandalika2();
 
+  // Setup SSE for relay status
+  setupSSERelayStatus();
+
   // Run it initially
   handleDeviceChange(mediaQuery);
 
@@ -101,7 +106,7 @@ function setupSSEMeasurements() {
 
   eventSource.addEventListener('measurement-data', (event) => {
     const data = JSON.parse(event.data);
-    console.log('Received measurement data for mandalika2:', data);
+    // console.log('Received measurement data for mandalika2:', data);
 
     updateSensorReadings(data.series);
     updateTable(data.series);
@@ -284,7 +289,7 @@ function pollDeviceStatusMandalika2() {
       .get(`/api/devicesStatus/mandalika2`)
       .then((response) => {
         const data = response.data;
-        console.log('Polling response:', data);
+        // console.log('Polling response:', data);
 
         const statusElement = document.getElementById('connection-status2');
         if (data.currentState === 'CONNECTED') {
@@ -316,7 +321,7 @@ function setupSSEConnMan2() {
 
   window.eventSource.addEventListener('device-status-change', (event) => {
     const data = JSON.parse(event.data);
-    console.log('Received SSE data:', data);
+    // console.log('Received SSE data:', data);
 
     const statusElement = document.getElementById('connection-status2');
     if (data.currentState) {
@@ -349,9 +354,9 @@ function pollControlMandalika2Status() {
     .get(`/api/controlStatus/mandalika2`)
     .then((response) => {
       const data = response.data;
-      console.log('Polling control status response:', data); // Log the polling response data
+      // console.log('Polling control status response:', data); // Log the polling response data
       const statusElement = document.getElementById('gate-status');
-      const status = data.currentState || 'UNKNOWN';
+      const status = data.currentState;
       updateGateStatus(status);
     })
     .catch((error) => {
@@ -365,16 +370,16 @@ function setupSSEControlMandalika2() {
     window.controlEventSource.close();
   }
 
-  console.log('Setting up SSE for mandalika2'); // Log SSE setup
+  // console.log('Setting up SSE for mandalika2'); // Log SSE setup
 
   window.controlEventSource = new EventSource(`/api/devicesEventsControlsMandalika2`);
 
   window.controlEventSource.addEventListener('control-status-change', (event) => {
     const data = JSON.parse(event.data);
-    console.log('Received SSE control-status-change data:', data); // Log the SSE data
+    // console.log('Received SSE control-status-change data:', data); // Log the SSE data
     const gateStatusElement = document.getElementById('gate-status');
     if (gateStatusElement) {
-      const newState = data.currentState || 'UNKNOWN';
+      const newState = data.currentState;
       updateGateStatus(newState);
     } else {
       console.error('Element with ID "gate-status" not found.');
@@ -389,12 +394,76 @@ function setupSSEControlMandalika2() {
   pollControlMandalika2Status();
 }
 
+function setupSSERelayStatus() {
+  if (window.relayEventSource) {
+    window.relayEventSource.close();
+  }
+
+  // console.log('Setting up SSE for relay status'); // Log SSE setup
+
+  window.relayEventSource = new EventSource(`/api/relayEvents/mandalika2`);
+
+  window.relayEventSource.addEventListener('relay-status-change', (event) => {
+    const data = JSON.parse(event.data);
+    // console.log('Received SSE relay-status-change data:', data); // Log the SSE data
+    const relayStatusElement = document.getElementById('relay-status');
+    if (relayStatusElement) {
+      relayStatus = data.currentState;
+      relayStatusElement.innerText = relayStatus;
+      relayStatusElement.style.color = getStatusColor(relayStatus);
+    } else {
+      console.error('Element with ID "relay-status" not found.');
+    }
+  });
+
+  window.relayEventSource.onerror = (error) => {
+    console.error('Error with relay SSE:', error);
+  };
+
+  pollRelayStatus();
+}
+
+function pollRelayStatus() {
+  setInterval(() => {
+    axios
+      .get(`/api/relayStatus/mandalika2`)
+      .then((response) => {
+        const data = response.data;
+        // console.log('Polling relay status response:', data);
+
+        const relayStatusElement = document.getElementById('relay-status');
+        if (data.currentState === 'STARTED') {
+          relayStatus = 'STARTED';
+          relayStatusElement.innerText = 'STARTED';
+          relayStatusElement.style.color = 'green';
+        } else if (data.currentState === 'STOPPED') {
+          relayStatus = 'STOPPED';
+          relayStatusElement.innerText = 'STOPPED';
+          relayStatusElement.style.color = 'red';
+        } else {
+          relayStatusElement.innerText = 'unknown';
+          relayStatusElement.style.color = 'grey';
+        }
+      })
+      .catch((error) => {
+        console.error('Error polling relay status:', error);
+        const relayStatusElement = document.getElementById('relay-status');
+        relayStatusElement.innerText = 'unknown';
+        relayStatusElement.style.color = 'grey';
+      });
+  }, 10000); // Setiap 10 detik
+}
+
 document.getElementById('pintu2-up').addEventListener('click', function () {
-  console.log('Opening gate'); // Log gate open action
+  if (relayStatus !== 'STARTED') {
+    alert('Relay Anda belum menyala');
+    return;
+  }
+  // console.log('Opening gate'); // Log gate open action
   axios
-    .post('/api/data/in-gate/controlopen')
+    .post('/api/data/out-gate/controlopen')
     .then((response) => {
-      console.log('Gate opened:', response.data); // Log the response data
+      // console.log('Gate opened:', response.data); // Log the response data
       setupSSEControlMandalika2();
       updateGateStatus('OPENED');
     })
@@ -405,11 +474,15 @@ document.getElementById('pintu2-up').addEventListener('click', function () {
 });
 
 document.getElementById('pintu2-down').addEventListener('click', function () {
-  console.log('Closing gate'); // Log gate close action
+  if (relayStatus !== 'STARTED') {
+    alert('Relay Anda belum menyala');
+    return;
+  }
+  // console.log('Closing gate'); // Log gate close action
   axios
-    .post('/api/data/in-gate/controlclose')
+    .post('/api/data/out-gate/controlclose')
     .then((response) => {
-      console.log('Gate closed:', response.data); // Log the response data
+      // console.log('Gate closed:', response.data); // Log the response data
       setupSSEControlMandalika2();
       updateGateStatus('CLOSED');
     })
@@ -418,12 +491,55 @@ document.getElementById('pintu2-down').addEventListener('click', function () {
       updateGateStatus('UNKNOWN');
     });
 });
+
+document.getElementById('relay-on').addEventListener('click', function () {
+  // console.log('Starting relay'); // Log relay start action
+  axios
+    .post('/api/relay/on')
+    .then((response) => {
+      // console.log('Relay started:', response.data); // Log the response data
+      setupSSERelayStatus();
+      relayStatus = 'STARTED';
+      updateRelayStatus('STARTED');
+    })
+    .catch((error) => {
+      console.error('Error starting relay:', error);
+      relayStatus = 'UNKNOWN';
+      updateRelayStatus('UNKNOWN');
+    });
+});
+
+document.getElementById('relay-off').addEventListener('click', function () {
+  console.log('Stopping relay'); // Log relay stop action
+  axios
+    .post('/api/relay/off')
+    .then((response) => {
+      // console.log('Relay stopped:', response.data); // Log the response data
+      setupSSERelayStatus();
+      relayStatus = 'STOPPED';
+      updateRelayStatus('STOPPED');
+    })
+    .catch((error) => {
+      console.error('Error stopping relay:', error);
+      relayStatus = 'UNKNOWN';
+      updateRelayStatus('UNKNOWN');
+    });
+});
+
 function updateGateStatus(status) {
   const statusElement = document.getElementById('gate-status');
   statusElement.innerText = status;
   statusElement.style.color = getStatusColor(status);
   localStorage.setItem('gateStatus', status);
-  console.log('Gate status updated:', status); // Log the updated status
+  // console.log('Gate status updated:', status); // Log the updated status
+}
+
+function updateRelayStatus(status) {
+  const statusElement = document.getElementById('relay-status');
+  statusElement.innerText = status;
+  statusElement.style.color = getStatusColor(status);
+  localStorage.setItem('relayStatus', status);
+  // console.log('Relay status updated:', status); // Log the updated status
 }
 
 function getStatusColor(status) {
@@ -432,6 +548,10 @@ function getStatusColor(status) {
       return 'green';
     case 'CLOSED':
       return 'red';
+    case 'STARTED':
+      return 'green';
+    case 'STOPPED':
+      return 'green';
     case 'UNKNOWN':
     default:
       return 'grey';
@@ -443,7 +563,7 @@ function loadGateStatus() {
   const statusElement = document.getElementById('gate-status');
   statusElement.innerText = status;
   statusElement.style.color = getStatusColor(status);
-  console.log('Gate status loaded:', status); // Log the loaded status
+  // console.log('Gate status loaded:', status); // Log the loaded status
 }
 
 window.addEventListener('load', (event) => {

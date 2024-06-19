@@ -46,14 +46,14 @@
         <h2><%=dashboardTitle%></h2>
         <h2>Status Inlet Water Level: <span id="status-inlet">Checking Status...</span></h2>
         <h2>Status inlet Gate: <span id="gate-status"></span></h2>
+        <h2>Status Relay Inlet Gate: <span id="relay-status"></span></h2>
         <h2>Connection Status Mandalika 1 : <span id="connection-status1">Checking connection...</span></h2>
 
         <div class="insights">
           <div class="pintu1">
             <div class="middle">
               <div class="left">
-                <h2>Inlet Gate</h2>
-                <h3>Ketinggian Air</h3>
+                <h3>Level Air</h3>
                 <h1 id="pintu1"></h1>
               </div>
               <div class="icon">
@@ -61,11 +61,19 @@
               </div>
             </div>
           </div>
-
-          <div class="controls">
-            <h2>Kontrol Inlet Gate</h2>
+        </div>
+        <!-- Control Cards -->
+        <div class="controls-container">
+          <div class="card controls">
+            <h2>Kontrol Outlet Gate</h2>
             <button id="pintu1-up" class="control-btn">Open</button>
             <button id="pintu1-down" class="control-btn">Close</button>
+          </div>
+
+          <div class="card controls">
+            <h2>Kontrol Start/Stop Relay</h2>
+            <button id="relay-on" class="control-btn">Start</button>
+            <button id="relay-off" class="control-btn">Stop</button>
           </div>
         </div>
         <!-- End of Insights -->

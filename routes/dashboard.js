@@ -391,6 +391,87 @@ router.get('/api/controlStatus/mandalika2', isAuthenticated, async (req, res) =>
   }
 });
 
+// RELAY STATUS //
+// Retrieve the current relay status of mandalika2
+router.get('/api/relayStatus/mandalika2', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika2/controls/watergate/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching relay status:', error);
+    res.status(500).json({ error: 'Failed to fetch relay status' });
+  }
+});
+
+// Subscribe for relay state changed events
+router.get('/api/relayEvents/mandalika2', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Add the new client to the clients array
+  const client = { res, deviceId: 'mandalika2' };
+  clients.push(client);
+
+  // Send a ping to keep the connection alive
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    clients = clients.filter((c) => c.res !== res);
+  });
+});
+
+// Retrieve the current relay status of mandalika2
+router.get('/api/relayStatus/mandalika1', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.get(`${config.LINK}/v1/devices/mandalika1/controls/watergate/status`, {
+      headers: { Accept: 'application/json' },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching relay status:', error);
+    res.status(500).json({ error: 'Failed to fetch relay status' });
+  }
+});
+
+// Subscribe for relay state changed events
+router.get('/api/relayEvents/mandalika1', isAuthenticated, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Add the new client to the clients array
+  const client = { res, deviceId: 'mandalika2' };
+  clients.push(client);
+
+  // Send a ping to keep the connection alive
+  const keepAliveInterval = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 20000);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    clients = clients.filter((c) => c.res !== res);
+  });
+});
+
+// Function to send events to all connected clients
+function sendRelayEvent(deviceId, data) {
+  clients.forEach((client) => {
+    if (client.deviceId === deviceId) {
+      client.res.write(`event: relay-status-change\ndata: ${JSON.stringify(data)}\n\n`);
+      console.log(`Event sent to device ID: ${deviceId} with data: ${JSON.stringify(data)}`); // Tambahkan log ini
+    }
+  });
+}
+
 //DEVICE CHANGE STATUS//
 // MANDALIKA 1 //
 function exampleStateChangeEventMandalika1(deviceId, state) {
@@ -533,6 +614,66 @@ router.post('/api/data/out-gate/controlclose', isAuthenticated, async (req, res)
   } catch (error) {
     console.error('Error fetching data from external API:', error);
     res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
+
+// Membuka relay
+router.post('/api/relay/on', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.post(`${config.LINK}/v1/devices/mandalika2/controls/watergate/commands`, { value: 'START' }, { headers: { Accept: 'application/json' } });
+
+    // Trigger the event
+    StateControlMandalika2ChangeEvent('STARTED');
+
+    res.json({ Relay: response.data });
+  } catch (error) {
+    console.error('Error starting relay:', error);
+    res.status(500).json({ error: 'Failed to start relay' });
+  }
+});
+
+// Menutup relay
+router.post('/api/relay/off', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.post(`${config.LINK}/v1/devices/mandalika2/controls/watergate/commands`, { value: 'STOP' }, { headers: { Accept: 'application/json' } });
+
+    // Trigger the event
+    StateControlMandalika2ChangeEvent('STOPPED');
+
+    res.json({ Relay: response.data });
+  } catch (error) {
+    console.error('Error stopping relay:', error);
+    res.status(500).json({ error: 'Failed to stop relay' });
+  }
+});
+
+// Membuka relay
+router.post('/api/relaymandalika1/on', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.post(`${config.LINK}/v1/devices/mandalika1/controls/watergate/commands`, { value: 'START' }, { headers: { Accept: 'application/json' } });
+
+    // Trigger the event
+    StateControlMandalika1ChangeEvent('STARTED');
+
+    res.json({ Relay: response.data });
+  } catch (error) {
+    console.error('Error starting relay:', error);
+    res.status(500).json({ error: 'Failed to start relay' });
+  }
+});
+
+// Menutup relay
+router.post('/api/relaymandalika1/off', isAuthenticated, async (req, res) => {
+  try {
+    const response = await axios.post(`${config.LINK}/v1/devices/mandalika1/controls/watergate/commands`, { value: 'STOP' }, { headers: { Accept: 'application/json' } });
+
+    // Trigger the event
+    StateControlMandalika1ChangeEvent('STOPPED');
+
+    res.json({ Relay: response.data });
+  } catch (error) {
+    console.error('Error stopping relay:', error);
+    res.status(500).json({ error: 'Failed to stop relay' });
   }
 });
 
