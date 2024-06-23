@@ -113,17 +113,24 @@ var outLevelLayout = {
 var config = { responsive: true, displayModeBar: false };
 
 // Event listener when page is loaded
-window.addEventListener('load', (event) => {
+window.addEventListener('load', async (event) => {
   Plotly.newPlot(inLevelHistoryDiv, [inLevelTrace], inLevelLayout, config);
   Plotly.newPlot(outLevelHistoryDiv, [outLevelTrace], outLevelLayout, config);
 
+  // Initial data fetch
+  await fetchInitialData('mandalika1', 'waterlevel');
+  await fetchInitialStatus('mandalika1');
+
+  await fetchInitialData('mandalika2', 'waterlevel');
+  await fetchInitialStatus('mandalika2');
+
   // Setup SSE connections for device status
-  setupSSEConnMan1();
-  setupSSEConnMan2();
+  setupSSEDeviceStatus('mandalika1');
+  setupSSEDeviceStatus('mandalika2');
 
   // Setup SSE connections for measurements
-  setupSSEMeasurementsMan1();
-  setupSSEMeasurementsMan2();
+  setupSSEMeasurements('mandalika1');
+  setupSSEMeasurements('mandalika2');
 
   // Run it initially
   handleDeviceChange(mediaQuery);
@@ -140,7 +147,6 @@ let newoutLevelYArray = [];
 let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
-// Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
 // Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
 function updateSensorReadings(inLevelSeries, outLevelSeries) {
   if (inLevelSeries) {
@@ -287,164 +293,81 @@ function handleDeviceChange(e) {
   }
 }
 
-function setupSSEMeasurementsMan1() {
-  const eventSource = new EventSource(`/api/measurementsEvents/mandalika1`);
-
-  eventSource.addEventListener('measurement-data', (event) => {
-    const data = JSON.parse(event.data);
-    console.log('Received measurement data for mandalika1:', data);
-
-    updateSensorReadings(data.series, null); // Assuming data structure has a property 'series' for the measurements
-  });
-
-  eventSource.onerror = (error) => {
-    console.error('Error with SSE for measurements mandalika1:', error);
-  };
-}
-
-function setupSSEMeasurementsMan2() {
-  const eventSource = new EventSource(`/api/measurementsEvents/mandalika2`);
-
-  eventSource.addEventListener('measurement-data', (event) => {
-    const data = JSON.parse(event.data);
-    console.log('Received measurement data for mandalika2:', data);
-
-    updateSensorReadings(null, data.series); // Assuming data structure has a property 'series' for the measurements
-  });
-
-  eventSource.onerror = (error) => {
-    console.error('Error with SSE for measurements mandalika2:', error);
-  };
-}
-
-function pollDeviceStatusMandalika1() {
-  setInterval(() => {
-    axios
-      .get(`/api/devicesStatus/mandalika1`)
-      .then((response) => {
-        const data = response.data;
-        console.log('Polling response:', data);
-
-        const statusElement = document.getElementById('connection-status1');
-        if (data.currentState === 'CONNECTED') {
-          statusElement.innerText = 'CONNECTED';
-          statusElement.style.color = 'green';
-        } else if (data.currentState === 'DISCONNECTED') {
-          statusElement.innerText = 'DISCONNECTED';
-          statusElement.style.color = 'red';
-        } else {
-          statusElement.innerText = 'UNKNOWN';
-          statusElement.style.color = 'grey';
-        }
-      })
-      .catch((error) => {
-        console.error('Error polling device status:', error);
-        const statusElement = document.getElementById('connection-status1');
-        statusElement.innerText = 'DISCONNECTED';
-        statusElement.style.color = 'red';
-      });
-  }, 10000); // Setiap 30 detik
-}
-
-function pollDeviceStatusMandalika2() {
-  setInterval(() => {
-    axios
-      .get(`/api/devicesStatus/mandalika2`)
-      .then((response) => {
-        const data = response.data;
-        console.log('Polling response:', data);
-
-        const statusElement = document.getElementById('connection-status2');
-        if (data.currentState === 'CONNECTED') {
-          statusElement.innerText = 'CONNECTED';
-          statusElement.style.color = 'green';
-        } else if (data.currentState === 'DISCONNECTED') {
-          statusElement.innerText = 'DISCONNECTED';
-          statusElement.style.color = 'red';
-        } else {
-          statusElement.innerText = 'UNKNOWN';
-          statusElement.style.color = 'grey';
-        }
-      })
-      .catch((error) => {
-        console.error('Error polling device status:', error);
-        const statusElement = document.getElementById('connection-status2');
-        statusElement.innerText = 'DISCONNECTED';
-        statusElement.style.color = 'red';
-      });
-  }, 10000); // Setiap 30 detik
-}
-
-function setupSSEConnMan1() {
-  if (window.eventSource) {
-    window.eventSource.close();
+async function fetchInitialData(deviceId, source) {
+  try {
+    const response = await axios.get(`/api/devices/${deviceId}/measurements/${source}/data`);
+    const data = response.data;
+    if (deviceId === 'mandalika1') {
+      updateSensorReadings(data.series, null);
+    } else if (deviceId === 'mandalika2') {
+      updateSensorReadings(null, data.series);
+    }
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
   }
+}
 
-  window.eventSource = new EventSource(`/api/devicesEvents/mandalika1`);
+async function fetchInitialStatus(deviceId) {
+  try {
+    const response = await axios.get(`/api/devices/${deviceId}/status`);
+    const data = response.data;
+    const statusElement = document.getElementById(`connection-status${deviceId === 'mandalika1' ? '1' : '2'}`);
+    if (data.currentState === 'CONNECTED') {
+      statusElement.innerText = 'CONNECTED';
+      statusElement.style.color = 'green';
+    } else if (data.currentState === 'DISCONNECTED') {
+      statusElement.innerText = 'DISCONNECTED';
+      statusElement.style.color = 'red';
+    } else {
+      statusElement.innerText = 'UNKNOWN';
+      statusElement.style.color = 'grey';
+    }
+  } catch (error) {
+    console.error('Error fetching initial status:', error);
+  }
+}
 
-  window.eventSource.addEventListener('device-status-change', (event) => {
+function setupSSEMeasurements(deviceId) {
+  const eventSource = new EventSource(`/api/measurementsEvents/${deviceId}`);
+
+  eventSource.addEventListener('measurement-data', (event) => {
     const data = JSON.parse(event.data);
-    console.log('Received SSE data:', data);
+    if (deviceId === 'mandalika1') {
+      updateSensorReadings(data.series, null);
+    } else if (deviceId === 'mandalika2') {
+      updateSensorReadings(null, data.series);
+    }
+    updateTable(data.series);
+  });
 
-    const statusElement = document.getElementById('connection-status1');
+  eventSource.onerror = (error) => {
+    console.error(`Error with SSE for measurements ${deviceId}:`, error);
+  };
+}
+
+function setupSSEDeviceStatus(deviceId) {
+  const eventSource = new EventSource(`/api/devicesEvents/${deviceId}`);
+  eventSource.addEventListener('device-status-change', (event) => {
+    const data = JSON.parse(event.data);
+    const statusElement = document.getElementById(`connection-status${deviceId === 'mandalika1' ? '1' : '2'}`);
     if (data.currentState) {
       if (data.currentState === 'CONNECTED') {
-        statusElement.innerText = 'connected';
+        statusElement.innerText = 'CONNECTED';
         statusElement.style.color = 'green';
       } else if (data.currentState === 'DISCONNECTED') {
-        statusElement.innerText = 'disconnected';
+        statusElement.innerText = 'DISCONNECTED';
         statusElement.style.color = 'red';
       } else {
-        statusElement.innerText = 'unknown';
+        statusElement.innerText = 'UNKNOWN';
         statusElement.style.color = 'grey';
       }
     } else {
-      statusElement.innerText = 'unknown';
+      statusElement.innerText = 'UNKNOWN';
       statusElement.style.color = 'grey';
     }
   });
 
-  window.eventSource.onerror = (error) => {
-    console.error('Error with SSE:', error);
+  eventSource.onerror = (error) => {
+    console.error('Error with SSE for device status:', error);
   };
-
-  // Mulai polling status perangkat
-  pollDeviceStatusMandalika1();
-}
-
-function setupSSEConnMan2() {
-  if (window.eventSource) {
-    window.eventSource.close();
-  }
-
-  window.eventSource = new EventSource(`/api/devicesEvents/mandalika2`);
-
-  window.eventSource.addEventListener('device-status-change', (event) => {
-    const data = JSON.parse(event.data);
-    console.log('Received SSE data:', data);
-
-    const statusElement = document.getElementById('connection-status2');
-    if (data.currentState) {
-      if (data.currentState === 'CONNECTED') {
-        statusElement.innerText = 'connected';
-        statusElement.style.color = 'green';
-      } else if (data.currentState === 'DISCONNECTED') {
-        statusElement.innerText = 'disconnected';
-        statusElement.style.color = 'red';
-      } else {
-        statusElement.innerText = 'unknown';
-        statusElement.style.color = 'grey';
-      }
-    } else {
-      statusElement.innerText = 'unknown';
-      statusElement.style.color = 'grey';
-    }
-  });
-
-  window.eventSource.onerror = (error) => {
-    console.error('Error with SSE:', error);
-  };
-
-  // Mulai polling status perangkat
-  pollDeviceStatusMandalika2();
 }

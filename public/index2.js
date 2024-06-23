@@ -1,19 +1,12 @@
-// Target specific HTML items
 const sideMenu = document.querySelector('aside');
 const menuBtn = document.querySelector('#menu-btn');
 const closeBtn = document.querySelector('#close-btn');
 const themeToggler = document.querySelector('.theme-toggler');
 
-// Holds the background color of all chart
-var chartBGColor = getComputedStyle(document.body).getPropertyValue('--chart-background');
-var chartFontColor = getComputedStyle(document.body).getPropertyValue('--chart-font-color');
-var chartAxisColor = getComputedStyle(document.body).getPropertyValue('--chart-axis-color');
+let chartBGColor = getComputedStyle(document.body).getPropertyValue('--chart-background');
+let chartFontColor = getComputedStyle(document.body).getPropertyValue('--chart-font-color');
+let chartAxisColor = getComputedStyle(document.body).getPropertyValue('--chart-axis-color');
 
-let relayStatus = 'STOPPED'; // Variable to track the relay status
-
-/*
-  Event listeners for any HTML click
-*/
 menuBtn.addEventListener('click', () => {
   sideMenu.style.display = 'block';
 });
@@ -27,22 +20,16 @@ themeToggler.addEventListener('click', () => {
   themeToggler.querySelector('span:nth-child(1)').classList.toggle('active');
   themeToggler.querySelector('span:nth-child(2)').classList.toggle('active');
 
-  // Update Chart background
   chartBGColor = getComputedStyle(document.body).getPropertyValue('--chart-background');
   chartFontColor = getComputedStyle(document.body).getPropertyValue('--chart-font-color');
   chartAxisColor = getComputedStyle(document.body).getPropertyValue('--chart-axis-color');
   updateChartsBackground();
 });
 
-/*
-  Plotly.js graph and chart setup code
-*/
-var outLevelHistoryDiv = document.getElementById('pintu2-history');
-
+const outLevelHistoryDiv = document.getElementById('pintu2-history');
 const historyCharts = [outLevelHistoryDiv];
 
-// History Data
-var outLevelTrace = {
+const outLevelTrace = {
   x: [],
   y: [],
   name: 'water level 2',
@@ -50,11 +37,9 @@ var outLevelTrace = {
   type: 'line',
 };
 
-var outLevelLayout = {
+const outLevelLayout = {
   autosize: true,
-  title: {
-    text: 'Outlet Gate',
-  },
+  title: { text: 'Outlet Gate' },
   font: {
     size: 12,
     color: chartFontColor,
@@ -77,53 +62,220 @@ var outLevelLayout = {
   },
 };
 
-var config = { responsive: true, displayModeBar: false };
+const config = { responsive: true, displayModeBar: false };
 
-// Event listener when page is loaded
-window.addEventListener('load', (event) => {
+window.addEventListener('load', async () => {
   Plotly.newPlot(outLevelHistoryDiv, [outLevelTrace], outLevelLayout, config);
 
-  // Setup SSE for measurements
-  setupSSEMeasurements();
+  await fetchInitialData('mandalika2', 'waterlevel');
+  await fetchInitialStatus('mandalika2');
+  await fetchInitialControlStatus('mandalika2');
 
-  // Setup SSE for device status (if needed)
-  setupSSEConnMan2();
+  setupSSEMeasurements('mandalika2');
+  setupSSEDeviceStatus('mandalika2');
+  setupSSEControlStatus('mandalika2');
 
-  // Setup SSE for control status (if needed)
-  setupSSEControlMandalika2();
-
-  // Setup SSE for relay status
-  setupSSERelayStatus();
-
-  // Run it initially
   handleDeviceChange(mediaQuery);
-
-  loadGateStatus();
 });
 
-function setupSSEMeasurements() {
-  const eventSource = new EventSource(`/api/measurementsEvents/mandalika2`);
+async function fetchInitialData(deviceId, source) {
+  try {
+    const response = await axios.get(`/api/devices/${deviceId}/measurements/${source}/data`);
+    const data = response.data;
+    updateSensorReadings(data.series);
+    updateTable(data.series);
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
+  }
+}
+
+async function fetchInitialStatus(deviceId) {
+  try {
+    const response = await axios.get(`/api/devices/${deviceId}/status`);
+    const data = response.data;
+    const statusElement = document.getElementById('connection-status2');
+    if (data.currentState === 'CONNECTED') {
+      statusElement.innerText = 'CONNECTED';
+      statusElement.style.color = 'green';
+    } else if (data.currentState === 'DISCONNECTED') {
+      statusElement.innerText = 'DISCONNECTED';
+      statusElement.style.color = 'red';
+    } else {
+      statusElement.innerText = 'UNKNOWN';
+      statusElement.style.color = 'grey';
+    }
+  } catch (error) {
+    console.error('Error fetching initial status:', error);
+  }
+}
+
+async function fetchInitialControlStatus(deviceId) {
+  try {
+    const response = await axios.get(`/api/devices/${deviceId}/controls/watergate/status`);
+    const data = response.data;
+    const statusElement = document.getElementById('gate-status2');
+    if (data.currentState === 'STARTED') {
+      statusElement.innerText = 'STARTED';
+      statusElement.style.color = 'green';
+    } else if (data.currentState === 'STOPPED') {
+      statusElement.innerText = 'STOPPED';
+      statusElement.style.color = 'red';
+    } else if (data.currentState === 'OPENED') {
+      statusElement.innerText = 'OPENED';
+      statusElement.style.color = 'green';
+    } else if (data.currentState === 'CLOSED') {
+      statusElement.innerText = 'CLOSED';
+      statusElement.style.color = 'green';
+    } else {
+      statusElement.innerText = 'UNKNOWN';
+      statusElement.style.color = 'grey';
+    }
+  } catch (error) {
+    console.error('Error fetching initial control status:', error);
+  }
+}
+
+function setupSSEMeasurements(deviceId) {
+  const eventSource = new EventSource(`/api/measurementsEvents/${deviceId}`);
 
   eventSource.addEventListener('measurement-data', (event) => {
     const data = JSON.parse(event.data);
-    // console.log('Received measurement data for mandalika2:', data);
-
     updateSensorReadings(data.series);
     updateTable(data.series);
   });
 
   eventSource.onerror = (error) => {
-    console.error('Error with SSE for measurements mandalika2:', error);
+    console.error(`Error with SSE for measurements ${deviceId}:`, error);
   };
 }
 
-// Pintu 2
-let newoutLevelXArray = [];
-let newoutLevelYArray = [];
+function setupSSEDeviceStatus(deviceId) {
+  const eventSource = new EventSource(`/api/devicesEvents/${deviceId}`);
+  eventSource.addEventListener('device-status-change', (event) => {
+    const data = JSON.parse(event.data);
+    const statusElement = document.getElementById('connection-status2');
+    if (data.currentState) {
+      if (data.currentState === 'CONNECTED') {
+        statusElement.innerText = 'CONNECTED';
+        statusElement.style.color = 'green';
+      } else if (data.currentState === 'DISCONNECTED') {
+        statusElement.innerText = 'DISCONNECTED';
+        statusElement.style.color = 'red';
+      } else {
+        statusElement.innerText = 'UNKNOWN';
+        statusElement.style.color = 'grey';
+      }
+    } else {
+      statusElement.innerText = 'UNKNOWN';
+      statusElement.style.color = 'grey';
+    }
+  });
 
-// The maximum number of data points displayed on our scatter/line graph
-let MAX_GRAPH_POINTS = 12;
-let ctr = 0;
+  eventSource.onerror = (error) => {
+    console.error('Error with SSE for device status:', error);
+  };
+}
+
+function setupSSEControlStatus(deviceId) {
+  const eventSource = new EventSource(`/api/devices/${deviceId}/controls/watergate/events`);
+
+  eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const statusElement = document.getElementById('gate-status2');
+    if (data.currentState === 'STARTED') {
+      statusElement.innerText = 'STARTED';
+      statusElement.style.color = 'green';
+    } else if (data.currentState === 'STOPPED') {
+      statusElement.innerText = 'STOPPED';
+      statusElement.style.color = 'red';
+    } else if (data.currentState === 'OPENED') {
+      statusElement.innerText = 'OPENED';
+      statusElement.style.color = 'green';
+    } else if (data.currentState === 'CLOSED') {
+      statusElement.innerText = 'CLOSED';
+      statusElement.style.color = 'green';
+    } else {
+      statusElement.innerText = 'UNKNOWN';
+      statusElement.style.color = 'grey';
+    }
+  };
+
+  eventSource.onerror = (error) => {
+    console.error('Error with SSE for control status:', error);
+  };
+}
+
+document.getElementById('pintu2-up').addEventListener('click', () => {
+  fetch('/api/data/mandalika2/control/open', {
+    method: 'POST',
+    body: JSON.stringify({ value: 'OPEN' }),
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      alert(data.succeed);
+    })
+    .catch((error) => {
+      console.error('Error opening gate:', error);
+    });
+});
+
+document.getElementById('pintu2-down').addEventListener('click', () => {
+  fetch('/api/data/mandalika2/control/close', {
+    method: 'POST',
+    body: JSON.stringify({ value: 'CLOSE' }),
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      alert(data.succeed);
+    })
+    .catch((error) => {
+      console.error('Error closing gate:', error);
+    });
+});
+
+document.getElementById('relay-on').addEventListener('click', () => {
+  fetch('/api/data/mandalika2/control/start', {
+    method: 'POST',
+    body: JSON.stringify({ value: 'START' }),
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      alert(data.succeed);
+    })
+    .catch((error) => {
+      console.error('Error starting relay:', error);
+    });
+});
+
+document.getElementById('relay-off').addEventListener('click', () => {
+  fetch('/api/data/mandalika2/control/stop', {
+    method: 'POST',
+    body: JSON.stringify({ value: 'STOP' }),
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      alert(data.succeed);
+    })
+    .catch((error) => {
+      console.error('Error stopping relay:', error);
+    });
+});
 
 function updateSensorReadings(outLevelSeries) {
   if (outLevelSeries) {
@@ -171,7 +323,6 @@ function updateBoxes(pintu2) {
   }
 }
 
-// Function to update charts
 function updateCharts(lineChartDivId, xArray, yArray) {
   const lineChartDiv = document.getElementById(lineChartDivId);
   if (!lineChartDiv) {
@@ -183,13 +334,10 @@ function updateCharts(lineChartDivId, xArray, yArray) {
 }
 
 function updateChartsBackground() {
-  // updates the background color of historical charts
   var updateHistory = {
     plot_bgcolor: chartBGColor,
     paper_bgcolor: chartBGColor,
-    font: {
-      color: chartFontColor,
-    },
+    font: { color: chartFontColor },
     xaxis: {
       color: chartAxisColor,
       linecolor: chartAxisColor,
@@ -204,7 +352,7 @@ function updateChartsBackground() {
 
 const mediaQuery = window.matchMedia('(max-width: 600px)');
 
-mediaQuery.addEventListener('change', function (e) {
+mediaQuery.addEventListener('change', (e) => {
   handleDeviceChange(e);
 });
 
@@ -227,8 +375,8 @@ function handleDeviceChange(e) {
     historyCharts.forEach((chart) => Plotly.relayout(chart, updateHistory));
   }
 }
-// Table
-let data = []; // Initialize an empty array to hold your data
+
+let data = [];
 
 let currentPage = 1;
 const rowsPerPage = 10;
@@ -263,11 +411,10 @@ document.getElementById('nextPage').addEventListener('click', () => {
   }
 });
 
-// Function to update the table with new data
 function updateTable(outLevelSeries) {
   data = outLevelSeries.map((item, index) => ({
     id: index + 1,
-    name: 'mandalika2', // Use an appropriate name or source
+    name: 'mandalika2',
     value: item.value,
     date: new Date(item.timestamp).toLocaleString('id-ID', {
       year: 'numeric',
@@ -281,291 +428,3 @@ function updateTable(outLevelSeries) {
 
   displayTable(currentPage);
 }
-
-//connection
-function pollDeviceStatusMandalika2() {
-  setInterval(() => {
-    axios
-      .get(`/api/devicesStatus/mandalika2`)
-      .then((response) => {
-        const data = response.data;
-        // console.log('Polling response:', data);
-
-        const statusElement = document.getElementById('connection-status2');
-        if (data.currentState === 'CONNECTED') {
-          statusElement.innerText = 'connected';
-          statusElement.style.color = 'green';
-        } else if (data.currentState === 'DISCONNECTED') {
-          statusElement.innerText = 'disconnected';
-          statusElement.style.color = 'red';
-        } else {
-          statusElement.innerText = 'unknown';
-          statusElement.style.color = 'grey';
-        }
-      })
-      .catch((error) => {
-        console.error('Error polling device status:', error);
-        const statusElement = document.getElementById('connection-status2');
-        statusElement.innerText = 'disconnected';
-        statusElement.style.color = 'red';
-      });
-  }, 10000); // Setiap 30 detik
-}
-
-function setupSSEConnMan2() {
-  if (window.eventSource) {
-    window.eventSource.close();
-  }
-
-  window.eventSource = new EventSource(`/api/devicesEvents/mandalika2`);
-
-  window.eventSource.addEventListener('device-status-change', (event) => {
-    const data = JSON.parse(event.data);
-    // console.log('Received SSE data:', data);
-
-    const statusElement = document.getElementById('connection-status2');
-    if (data.currentState) {
-      if (data.currentState === 'CONNECTED') {
-        statusElement.innerText = 'connected';
-        statusElement.style.color = 'green';
-      } else if (data.currentState === 'DISCONNECTED') {
-        statusElement.innerText = 'disconnected';
-        statusElement.style.color = 'red';
-      } else {
-        statusElement.innerText = 'unknown';
-        statusElement.style.color = 'grey';
-      }
-    } else {
-      statusElement.innerText = 'unknown';
-      statusElement.style.color = 'grey';
-    }
-  });
-
-  window.eventSource.onerror = (error) => {
-    console.error('Error with SSE:', error);
-  };
-
-  // Mulai polling status perangkat
-  pollDeviceStatusMandalika2();
-}
-//control
-function pollControlMandalika2Status() {
-  axios
-    .get(`/api/controlStatus/mandalika2`)
-    .then((response) => {
-      const data = response.data;
-      // console.log('Polling control status response:', data); // Log the polling response data
-      const statusElement = document.getElementById('gate-status');
-      const status = data.currentState;
-      updateGateStatus(status);
-    })
-    .catch((error) => {
-      console.error('Error polling control status:', error);
-      updateGateStatus('UNKNOWN');
-    });
-}
-
-function setupSSEControlMandalika2() {
-  if (window.controlEventSource) {
-    window.controlEventSource.close();
-  }
-
-  // console.log('Setting up SSE for mandalika2'); // Log SSE setup
-
-  window.controlEventSource = new EventSource(`/api/devicesEventsControlsMandalika2`);
-
-  window.controlEventSource.addEventListener('control-status-change', (event) => {
-    const data = JSON.parse(event.data);
-    // console.log('Received SSE control-status-change data:', data); // Log the SSE data
-    const gateStatusElement = document.getElementById('gate-status');
-    if (gateStatusElement) {
-      const newState = data.currentState;
-      updateGateStatus(newState);
-    } else {
-      console.error('Element with ID "gate-status" not found.');
-    }
-  });
-
-  window.controlEventSource.onerror = (error) => {
-    console.error('Error with control SSE:', error);
-    updateGateStatus('UNKNOWN');
-  };
-
-  pollControlMandalika2Status();
-}
-
-function setupSSERelayStatus() {
-  if (window.relayEventSource) {
-    window.relayEventSource.close();
-  }
-
-  // console.log('Setting up SSE for relay status'); // Log SSE setup
-
-  window.relayEventSource = new EventSource(`/api/relayEvents/mandalika2`);
-
-  window.relayEventSource.addEventListener('relay-status-change', (event) => {
-    const data = JSON.parse(event.data);
-    // console.log('Received SSE relay-status-change data:', data); // Log the SSE data
-    const relayStatusElement = document.getElementById('relay-status');
-    if (relayStatusElement) {
-      relayStatus = data.currentState;
-      relayStatusElement.innerText = relayStatus;
-      relayStatusElement.style.color = getStatusColor(relayStatus);
-    } else {
-      console.error('Element with ID "relay-status" not found.');
-    }
-  });
-
-  window.relayEventSource.onerror = (error) => {
-    console.error('Error with relay SSE:', error);
-  };
-
-  pollRelayStatus();
-}
-
-function pollRelayStatus() {
-  setInterval(() => {
-    axios
-      .get(`/api/relayStatus/mandalika2`)
-      .then((response) => {
-        const data = response.data;
-        // console.log('Polling relay status response:', data);
-
-        const relayStatusElement = document.getElementById('relay-status');
-        if (data.currentState === 'STARTED') {
-          relayStatus = 'STARTED';
-          relayStatusElement.innerText = 'STARTED';
-          relayStatusElement.style.color = 'green';
-        } else if (data.currentState === 'STOPPED') {
-          relayStatus = 'STOPPED';
-          relayStatusElement.innerText = 'STOPPED';
-          relayStatusElement.style.color = 'red';
-        } else {
-          relayStatusElement.innerText = 'unknown';
-          relayStatusElement.style.color = 'grey';
-        }
-      })
-      .catch((error) => {
-        console.error('Error polling relay status:', error);
-        const relayStatusElement = document.getElementById('relay-status');
-        relayStatusElement.innerText = 'unknown';
-        relayStatusElement.style.color = 'grey';
-      });
-  }, 10000); // Setiap 10 detik
-}
-
-document.getElementById('pintu2-up').addEventListener('click', function () {
-  if (relayStatus !== 'STARTED') {
-    alert('Relay Anda belum menyala');
-    return;
-  }
-  // console.log('Opening gate'); // Log gate open action
-  axios
-    .post('/api/data/out-gate/controlopen')
-    .then((response) => {
-      // console.log('Gate opened:', response.data); // Log the response data
-      setupSSEControlMandalika2();
-      updateGateStatus('OPENED');
-    })
-    .catch((error) => {
-      console.error('Error opening gate:', error);
-      updateGateStatus('UNKNOWN');
-    });
-});
-
-document.getElementById('pintu2-down').addEventListener('click', function () {
-  if (relayStatus !== 'STARTED') {
-    alert('Relay Anda belum menyala');
-    return;
-  }
-  // console.log('Closing gate'); // Log gate close action
-  axios
-    .post('/api/data/out-gate/controlclose')
-    .then((response) => {
-      // console.log('Gate closed:', response.data); // Log the response data
-      setupSSEControlMandalika2();
-      updateGateStatus('CLOSED');
-    })
-    .catch((error) => {
-      console.error('Error closing gate:', error);
-      updateGateStatus('UNKNOWN');
-    });
-});
-
-document.getElementById('relay-on').addEventListener('click', function () {
-  // console.log('Starting relay'); // Log relay start action
-  axios
-    .post('/api/relay/on')
-    .then((response) => {
-      // console.log('Relay started:', response.data); // Log the response data
-      setupSSERelayStatus();
-      relayStatus = 'STARTED';
-      updateRelayStatus('STARTED');
-    })
-    .catch((error) => {
-      console.error('Error starting relay:', error);
-      relayStatus = 'UNKNOWN';
-      updateRelayStatus('UNKNOWN');
-    });
-});
-
-document.getElementById('relay-off').addEventListener('click', function () {
-  console.log('Stopping relay'); // Log relay stop action
-  axios
-    .post('/api/relay/off')
-    .then((response) => {
-      // console.log('Relay stopped:', response.data); // Log the response data
-      setupSSERelayStatus();
-      relayStatus = 'STOPPED';
-      updateRelayStatus('STOPPED');
-    })
-    .catch((error) => {
-      console.error('Error stopping relay:', error);
-      relayStatus = 'UNKNOWN';
-      updateRelayStatus('UNKNOWN');
-    });
-});
-
-function updateGateStatus(status) {
-  const statusElement = document.getElementById('gate-status');
-  statusElement.innerText = status;
-  statusElement.style.color = getStatusColor(status);
-  localStorage.setItem('gateStatus', status);
-  // console.log('Gate status updated:', status); // Log the updated status
-}
-
-function updateRelayStatus(status) {
-  const statusElement = document.getElementById('relay-status');
-  statusElement.innerText = status;
-  statusElement.style.color = getStatusColor(status);
-  localStorage.setItem('relayStatus', status);
-  // console.log('Relay status updated:', status); // Log the updated status
-}
-
-function getStatusColor(status) {
-  switch (status) {
-    case 'OPENED':
-      return 'green';
-    case 'CLOSED':
-      return 'red';
-    case 'STARTED':
-      return 'green';
-    case 'STOPPED':
-      return 'green';
-    case 'UNKNOWN':
-    default:
-      return 'grey';
-  }
-}
-
-function loadGateStatus() {
-  const status = localStorage.getItem('gateStatus') || 'UNKNOWN';
-  const statusElement = document.getElementById('gate-status');
-  statusElement.innerText = status;
-  statusElement.style.color = getStatusColor(status);
-  // console.log('Gate status loaded:', status); // Log the loaded status
-}
-
-window.addEventListener('load', (event) => {
-  loadGateStatus();
-});
