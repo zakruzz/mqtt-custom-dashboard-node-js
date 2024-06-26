@@ -60,6 +60,33 @@
           </div>
         </div>
 
+        <h2 style="margin-top: 10px">Pengaturan Setpoint</h2>
+        <!-- Set Point Control -->
+        <div class="controls-container">
+          <div class="card controls">
+            <h2>Atur Untuk Setpoint Aman</h2>
+            <input type="range" id="Set-Point-Aman" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Aman-value"></span></p>
+            <h2>Atur Untuk Setpoint Siaga 1</h2>
+            <input type="range" id="Set-Point-Siaga-1" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Siaga-1-value"></span></p>
+            <h2>Atur Untuk Setpoint Siaga 2</h2>
+            <input type="range" id="Set-Point-Siaga-2" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Siaga-2-value"></span></p>
+            <h2>Atur Untuk Setpoint Bahaya</h2>
+            <input type="range" id="Set-Point-Bahaya" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Bahaya-value"></span></p>
+            <h2>Atur Untuk Batas Maximal</h2>
+            <input type="range" id="Set-Point-Maximal" min="1" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Maximal-value"></span></p>
+            <h2>Atur Untuk Batas Minimal</h2>
+            <input type="range" id="Set-Point-Minimal" min="1" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Minimal-value"></span></p>
+            <button id="Set-Point-Accept" class="control-btn">Accept</button>
+          </div>
+        </div>
+
+        <h2 style="margin-top: 10px">Kontrol Gate Pintu</h2>
         <!-- Control Cards -->
         <div class="controls-container">
           <div class="card controls">
@@ -78,21 +105,21 @@
         <!-- End of Insights -->
         <div class="histories">
           <div class="history-charts-pintu1">
-            <h2>Historical Charts</h2>
+            <h2>Data Grafik</h2>
             <!-- <div id="pintu1-history" class="history-divs"></div> -->
             <div id="pintu2-history" class="history-divs"></div>
           </div>
         </div>
 
         <div class="data-table">
-          <h2>Data Table</h2>
+          <h2>Data Tabel</h2>
           <table id="dataTable">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Value</th>
-                <th>Date</th>
+                <th>Nomor</th>
+                <th>Nama</th>
+                <th>Nilai</th>
+                <th>Tanggal</th>
               </tr>
             </thead>
             <tbody>
@@ -100,9 +127,9 @@
             </tbody>
           </table>
           <div class="pagination">
-            <button id="prevPage">Previous</button>
+            <button id="prevPage">Sebelumnya</button>
             <span id="pageDisplay">1</span>
-            <button id="nextPage">Next</button>
+            <button id="nextPage">Sesudahnya</button>
           </div>
         </div>
       </main>
@@ -121,5 +148,20 @@
     </div>
     <script type="module" src="./index2.js"></script>
     <!-- <script type="module" src="./mqttService.js"></script> -->
+    <script>
+      function updateSliderBackground(slider) {
+        const value = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.background = `linear-gradient(to right, #4caf50 0%, #4caf50 ${value}%, #ddd ${value}%, #ddd 100%)`;
+      }
+
+      document.querySelectorAll('input[type="range"]').forEach((slider) => {
+        slider.addEventListener('input', function () {
+          document.getElementById(`${this.id}-value`).textContent = this.value;
+          updateSliderBackground(this);
+        });
+        // Initialize the slider background on page load
+        updateSliderBackground(slider);
+      });
+    </script>
   </body>
 </html>
