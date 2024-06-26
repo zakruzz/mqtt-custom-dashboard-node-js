@@ -2,13 +2,13 @@
   "name": "mqtt-custom-dashboard-node",
   "version": "1.0.0",
   "description": "A custom dashboard built using Node.js",
-  "main": "app.js",
+  "main": "index.js",
   "engines": {
     "node": "20.x"
   },
   "scripts": {
     "prod": "node app.js",
-    "dev": "node app.js"
+    "dev": "nodemon app.js"
   },
   "repository": {
     "type": "git",
