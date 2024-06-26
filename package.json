@@ -6,10 +6,6 @@
   "engines": {
     "node": "20.x"
   },
-  "scripts": {
-    "prod": "node app.js",
-    "dev": "nodemon app.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/donskytech/mqtt-custom-dashboard-node-js.git"

@@ -1,3 +1,8 @@
   "MQTT_BROKER": "ws://127.0.0.1:9001/mqtt",
   "MQTT_TOPIC": "sensorReadings",
     "NAME_USER": "Admin",
+
+    "scripts": {
+    "prod": "node app.js",
+    "dev": "nodemon app.js"
+  },
