@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A custom dashboard built using Node.js",
   "main": "index.js",
+  "engines": {
+    "node": "14.x"
+  },
   "scripts": {
     "prod": "node app.js",
     "dev": "nodemon app.js"
