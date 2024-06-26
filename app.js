@@ -3,7 +3,6 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
-// const fs = require('fs');
 const port = 3001;
 
 // Set the view engine to ejs
@@ -15,28 +14,8 @@ app.use(express.static('public'));
 // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.urlencoded({ extended: true }));
 
-// // Load configuration
-// function loadConfig() {
-//   try {
-//     const configData = fs.readFileSync('./config.json', 'utf-8');
-//     return JSON.parse(configData);
-//   } catch (err) {
-//     console.error('Error reading config.json:', err);
-//     return {};
-//   }
-// }
-
-// const config = loadConfig();
-
 //Use CORS middleware
 app.use(cors());
-
-// Middleware untuk mengizinkan CORS
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', '*');
-//   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-// });
 
 // Session middleware
 app.use(
