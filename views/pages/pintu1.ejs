@@ -61,7 +61,35 @@
             </div>
           </div>
         </div>
+
+        <h2 style="margin-top: 10px">Pengaturan Setpoint</h2>
         <!-- Control Cards -->
+        <div class="controls-container">
+          <div class="card controls">
+            <h2>Atur Untuk Setpoint Aman</h2>
+            <input type="range" id="Set-Point-Aman" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Aman-value"></span></p>
+            <h2>Atur Untuk Setpoint Siaga 1</h2>
+            <input type="range" id="Set-Point-Siaga-1" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Siaga-1-value"></span></p>
+            <h2>Atur Untuk Setpoint Siaga 2</h2>
+            <input type="range" id="Set-Point-Siaga-2" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Siaga-2-value"></span></p>
+            <h2>Atur Untuk Setpoint Bahaya</h2>
+            <input type="range" id="Set-Point-Bahaya" min="0" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Bahaya-value"></span></p>
+            <h2>Atur Untuk Batas Maximal</h2>
+            <input type="range" id="Set-Point-Maximal" min="1" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Maximal-value"></span></p>
+            <h2>Atur Untuk Batas Minimal</h2>
+            <input type="range" id="Set-Point-Minimal" min="1" max="10" step="1" value="0" />
+            <p>Value: <span id="Set-Point-Minimal-value"></span></p>
+            <button id="Set-Point-Accept" class="control-btn">Accept</button>
+          </div>
+        </div>
+
+        <h2 style="margin-top: 10px">Kontrol Gate Pintu</h2>
+
         <div class="controls-container">
           <div class="card controls">
             <h2>Kontrol Outlet Gate</h2>
