@@ -59,7 +59,7 @@ router.get('/dashboard', isAuthenticated, (req, res) => {
 
 router.get('/api/measurementsEvents/:deviceId', isAuthenticated, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  //res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
   const deviceId = req.params.deviceId;
@@ -116,7 +116,7 @@ router.get('/api/devices/:deviceId/status', isAuthenticated, async (req, res) =>
 
 router.get('/api/devicesEvents/:deviceId', isAuthenticated, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  //res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
   const deviceId = req.params.deviceId;
@@ -164,7 +164,7 @@ let controlClients = [];
 // SSE route for control status
 router.get('/api/devices/:deviceId/controls/watergate/events', isAuthenticated, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  //res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
   const deviceId = req.params.deviceId;

@@ -56,25 +56,23 @@ var outLevelTrace = {
   type: 'line',
 };
 
-var inLevelLayout = {
+const inLevelLayout = {
   autosize: true,
-  title: {
-    text: 'Inlet Gate',
-  },
+  title: { text: 'Inlet Gate' },
   font: {
     size: 12,
     color: chartFontColor,
     family: 'poppins, san-serif',
   },
   colorway: ['#05AD86'],
-  margin: { t: 40, b: 40, l: 30, r: 30, pad: 10 },
+  margin: { t: 40, b: 40, l: 30, r: 30, pad: 0 },
   plot_bgcolor: chartBGColor,
   paper_bgcolor: chartBGColor,
   xaxis: {
     color: chartAxisColor,
     linecolor: chartAxisColor,
     gridwidth: '2',
-    autorange: true,
+    autorange: 'reversed', // Menampilkan data terbaru di sebelah kanan
   },
   yaxis: {
     color: chartAxisColor,
@@ -83,6 +81,7 @@ var inLevelLayout = {
     autorange: true,
   },
 };
+
 var outLevelLayout = {
   autosize: true,
   title: {
@@ -101,6 +100,7 @@ var outLevelLayout = {
     color: chartAxisColor,
     linecolor: chartAxisColor,
     gridwidth: '2',
+    autorange: 'reversed',
   },
   yaxis: {
     color: chartAxisColor,
@@ -147,9 +147,24 @@ let newoutLevelYArray = [];
 let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
-// Callback function that will retrieve our latest sensor readings and redraw our Gauge with the latest readings
 function updateSensorReadings(inLevelSeries, outLevelSeries) {
-  if (inLevelSeries) {
+  let latestInLevelValue = null;
+  let latestOutLevelValue = null;
+
+  // Memproses data untuk Inlet Gate
+  if (inLevelSeries && inLevelSeries.length >= 0) {
+    console.log('Raw inLevelSeries:', inLevelSeries);
+
+    // Sortir data berdasarkan timestamp (terbaru ke terlama)
+    inLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Mendapatkan data terbaru
+    const latestData = inLevelSeries[0];
+    latestInLevelValue = latestData.value;
+
+    console.log('Latest inLevel Data:', latestData);
+
+    // Memproses data untuk grafik
     const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = inLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
@@ -165,11 +180,27 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(pintu1[pintu1.length - 1], null);
+    console.log('Processed pintu1 values:', pintu1);
+    console.log('Processed timestamps:', timestamps);
+
+    // Memperbarui grafik
     updateCharts('pintu1-history', timestamps, pintu1);
   }
 
-  if (outLevelSeries) {
+  // Memproses data untuk Outlet Gate
+  if (outLevelSeries && outLevelSeries.length >= 0) {
+    console.log('Raw outLevelSeries:', outLevelSeries);
+
+    // Sortir data berdasarkan timestamp (terbaru ke terlama)
+    outLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Mendapatkan data terbaru
+    const latestData = outLevelSeries[0];
+    latestOutLevelValue = latestData.value;
+
+    console.log('Latest outLevel Data:', latestData);
+
+    // Memproses data untuk grafik
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = outLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
@@ -185,9 +216,15 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(null, pintu2[pintu2.length - 1]);
+    console.log('Processed pintu2 values:', pintu2);
+    console.log('Processed timestamps:', timestamps);
+
+    // Memperbarui grafik
     updateCharts('pintu2-history', timestamps, pintu2);
   }
+
+  // Memperbarui kotak tampilan dengan nilai terbaru dari kedua pintu
+  updateBoxes(latestInLevelValue, latestOutLevelValue);
 }
 
 function updateBoxes(pintu1, pintu2) {
@@ -197,39 +234,39 @@ function updateBoxes(pintu1, pintu2) {
   let pintu2Status = document.getElementById('status-outlet');
 
   if (pintu1 !== null) {
-    pintu1Div.innerHTML = pintu1 + 'M';
+    pintu1Div.innerHTML = pintu1 + ' M'; // Menggunakan 'M' sebagai satuan
     if (pintu1Status) {
       if (pintu1 <= 200) {
         pintu1Status.innerText = 'Aman';
-        pintu1Status.style.color = 'rgb(99, 209, 35)'; // Green
+        pintu1Status.style.color = 'rgb(99, 209, 35)'; // Warna hijau
       } else if (pintu1 <= 400) {
         pintu1Status.innerText = 'Siaga 1';
-        pintu1Status.style.color = '#ffcc00';
+        pintu1Status.style.color = '#ffcc00'; // Warna kuning
       } else if (pintu1 <= 600) {
         pintu1Status.innerText = 'Siaga 2';
-        pintu1Status.style.color = '#ff6600';
+        pintu1Status.style.color = '#ff6600'; // Warna oranye
       } else {
         pintu1Status.innerText = 'Bahaya';
-        pintu1Status.style.color = '#ff0000';
+        pintu1Status.style.color = '#ff0000'; // Warna merah
       }
     }
   }
 
   if (pintu2 !== null) {
-    pintu2Div.innerHTML = pintu2 + 'M';
+    pintu2Div.innerHTML = pintu2 + ' M'; // Menggunakan 'M' sebagai satuan
     if (pintu2Status) {
       if (pintu2 <= 200) {
         pintu2Status.innerText = 'Aman';
-        pintu2Status.style.color = 'rgb(99, 209, 35)'; // Green
+        pintu2Status.style.color = 'rgb(99, 209, 35)'; // Warna hijau
       } else if (pintu2 <= 400) {
         pintu2Status.innerText = 'Siaga 1';
-        pintu2Status.style.color = '#ffcc00';
+        pintu2Status.style.color = '#ffcc00'; // Warna kuning
       } else if (pintu2 <= 600) {
         pintu2Status.innerText = 'Siaga 2';
-        pintu2Status.style.color = '#ff6600';
+        pintu2Status.style.color = '#ff6600'; // Warna oranye
       } else {
         pintu2Status.innerText = 'Bahaya';
-        pintu2Status.style.color = '#ff0000';
+        pintu2Status.style.color = '#ff0000'; // Warna merah
       }
     }
   }

@@ -55,6 +55,7 @@ const inLevelLayout = {
     color: chartAxisColor,
     linecolor: chartAxisColor,
     gridwidth: '2',
+    autorange: 'reversed', // Menampilkan data terbaru di sebelah kanan
   },
   yaxis: {
     color: chartAxisColor,
@@ -84,6 +85,7 @@ async function fetchInitialData(deviceId, source) {
   try {
     const response = await axios.get(`/api/devices/${deviceId}/measurements/${source}/data`);
     const data = response.data;
+    console.log('Fetched data:', data); // Debug log
     updateSensorReadings(data.series);
     updateTable(data.series);
   } catch (error) {
@@ -280,8 +282,17 @@ document.getElementById('relay-off').addEventListener('click', () => {
 });
 
 function updateSensorReadings(inLevelSeries) {
-  if (inLevelSeries) {
+  if (inLevelSeries && inLevelSeries.length > 0) {
+    console.log('Raw inLevelSeries:', inLevelSeries); // Debug log
+
+    // Mengurutkan data berdasarkan timestamp terbaru
+    inLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Ambil elemen terbaru setelah pengurutan
+    const latestData = inLevelSeries[0];
     const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
+    console.log('Mapped pintu1 values:', pintu1); // Debug log after mapping
+
     const timestamps = inLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
@@ -296,24 +307,31 @@ function updateSensorReadings(inLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(pintu1[pintu1.length - 1]);
+    console.log('Processed pintu1 values:', pintu1); // Debug log
+    console.log('Processed timestamps:', timestamps); // Debug log
+
+    updateBoxes(latestData.value);
     updateCharts('pintu1-history', timestamps, pintu1);
+  } else {
+    console.error('inLevelSeries is empty or undefined');
   }
 }
 
-function updateBoxes(pintu1) {
+function updateBoxes(latestValue) {
+  console.log('updateBoxes called with latestValue:', latestValue); // Debug log
+
   let pintu1Div = document.getElementById('pintu1');
   let pintu1Status = document.getElementById('status-inlet');
 
-  if (pintu1Status) {
-    pintu1Div.innerHTML = pintu1 + 'M';
-    if (pintu1 <= 200) {
+  if (pintu1Div && pintu1Status) {
+    pintu1Div.innerHTML = latestValue + 'M';
+    if (latestValue <= 200) {
       pintu1Status.innerText = 'Aman';
       pintu1Status.style.color = 'rgb(99, 209, 35)'; // Green
-    } else if (pintu1 <= 400) {
+    } else if (latestValue <= 400) {
       pintu1Status.innerText = 'Siaga 1';
       pintu1Status.style.color = '#ffcc00';
-    } else if (pintu1 <= 600) {
+    } else if (latestValue <= 600) {
       pintu1Status.innerText = 'Siaga 2';
       pintu1Status.style.color = '#ff6600';
     } else {

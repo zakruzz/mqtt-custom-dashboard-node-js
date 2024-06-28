@@ -53,6 +53,7 @@ const outLevelLayout = {
     color: chartAxisColor,
     linecolor: chartAxisColor,
     gridwidth: '2',
+    autorange: 'reversed',
   },
   yaxis: {
     color: chartAxisColor,
@@ -278,8 +279,17 @@ document.getElementById('relay-off').addEventListener('click', () => {
 });
 
 function updateSensorReadings(outLevelSeries) {
-  if (outLevelSeries) {
+  if (outLevelSeries && outLevelSeries.length > 0) {
+    console.log('Raw outLevelSeries:', outLevelSeries); // Debug log
+
+    // Mengurutkan data berdasarkan timestamp terbaru
+    outLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Ambil elemen terbaru setelah pengurutan
+    const latestData = outLevelSeries[0];
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
+    console.log('Mapped pintu2 values:', pintu2); // Debug log after mapping
+
     const timestamps = outLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
@@ -294,24 +304,31 @@ function updateSensorReadings(outLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(pintu2[pintu2.length - 1]);
+    console.log('Processed pintu2 values:', pintu2); // Debug log
+    console.log('Processed timestamps:', timestamps); // Debug log
+
+    updateBoxes(latestData.value);
     updateCharts('pintu2-history', timestamps, pintu2);
+  } else {
+    console.error('inLevelSeries is empty or undefined');
   }
 }
 
-function updateBoxes(pintu2) {
+function updateBoxes(latestValue) {
+  console.log('updateBoxes called with latestValue:', latestValue); // Debug log
+
   let pintu2Div = document.getElementById('pintu2');
   let pintu2Status = document.getElementById('status-outlet');
 
-  if (pintu2Status) {
-    pintu2Div.innerHTML = pintu2 + 'M';
-    if (pintu2 <= 200) {
+  if (pintu2Div && pintu2Status) {
+    pintu2Div.innerHTML = latestValue + 'M';
+    if (latestValue <= 200) {
       pintu2Status.innerText = 'Aman';
       pintu2Status.style.color = 'rgb(99, 209, 35)'; // Green
-    } else if (pintu2 <= 400) {
+    } else if (latestValue <= 400) {
       pintu2Status.innerText = 'Siaga 1';
       pintu2Status.style.color = '#ffcc00';
-    } else if (pintu2 <= 600) {
+    } else if (latestValue <= 600) {
       pintu2Status.innerText = 'Siaga 2';
       pintu2Status.style.color = '#ff6600';
     } else {
@@ -319,7 +336,7 @@ function updateBoxes(pintu2) {
       pintu2Status.style.color = '#ff0000';
     }
   } else {
-    console.error('Outlet gate status element not found');
+    console.error('Inlet gate status element not found');
   }
 }
 
