@@ -85,7 +85,6 @@ async function fetchInitialData(deviceId, source) {
   try {
     const response = await axios.get(`/api/devices/${deviceId}/measurements/${source}/data`);
     const data = response.data;
-    console.log('Fetched data:', data); // Debug log
     updateSensorReadings(data.series);
     updateTable(data.series);
   } catch (error) {
@@ -282,16 +281,13 @@ document.getElementById('relay-off').addEventListener('click', () => {
 });
 
 function updateSensorReadings(inLevelSeries) {
-  if (inLevelSeries && inLevelSeries.length > 0) {
-    console.log('Raw inLevelSeries:', inLevelSeries); // Debug log
-
+  if (inLevelSeries && inLevelSeries.length >= 0) {
     // Mengurutkan data berdasarkan timestamp terbaru
     inLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
 
     // Ambil elemen terbaru setelah pengurutan
     const latestData = inLevelSeries[0];
     const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
-    console.log('Mapped pintu1 values:', pintu1); // Debug log after mapping
 
     const timestamps = inLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
@@ -307,9 +303,6 @@ function updateSensorReadings(inLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    console.log('Processed pintu1 values:', pintu1); // Debug log
-    console.log('Processed timestamps:', timestamps); // Debug log
-
     updateBoxes(latestData.value);
     updateCharts('pintu1-history', timestamps, pintu1);
   } else {
@@ -318,8 +311,6 @@ function updateSensorReadings(inLevelSeries) {
 }
 
 function updateBoxes(latestValue) {
-  console.log('updateBoxes called with latestValue:', latestValue); // Debug log
-
   let pintu1Div = document.getElementById('pintu1');
   let pintu1Status = document.getElementById('status-inlet');
 

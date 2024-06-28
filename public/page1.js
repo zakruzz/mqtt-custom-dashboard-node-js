@@ -153,17 +153,12 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
 
   // Memproses data untuk Inlet Gate
   if (inLevelSeries && inLevelSeries.length >= 0) {
-    console.log('Raw inLevelSeries:', inLevelSeries);
-
     // Sortir data berdasarkan timestamp (terbaru ke terlama)
     inLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
 
     // Mendapatkan data terbaru
     const latestData = inLevelSeries[0];
     latestInLevelValue = latestData.value;
-
-    console.log('Latest inLevel Data:', latestData);
-
     // Memproses data untuk grafik
     const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
     const timestamps = inLevelSeries.map((data) => {
@@ -180,25 +175,18 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    console.log('Processed pintu1 values:', pintu1);
-    console.log('Processed timestamps:', timestamps);
-
     // Memperbarui grafik
     updateCharts('pintu1-history', timestamps, pintu1);
   }
 
   // Memproses data untuk Outlet Gate
   if (outLevelSeries && outLevelSeries.length >= 0) {
-    console.log('Raw outLevelSeries:', outLevelSeries);
-
     // Sortir data berdasarkan timestamp (terbaru ke terlama)
     outLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
 
     // Mendapatkan data terbaru
     const latestData = outLevelSeries[0];
     latestOutLevelValue = latestData.value;
-
-    console.log('Latest outLevel Data:', latestData);
 
     // Memproses data untuk grafik
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
@@ -215,9 +203,6 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
       };
       return date.toLocaleString('id-ID', options);
     });
-
-    console.log('Processed pintu2 values:', pintu2);
-    console.log('Processed timestamps:', timestamps);
 
     // Memperbarui grafik
     updateCharts('pintu2-history', timestamps, pintu2);

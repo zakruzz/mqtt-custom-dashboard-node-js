@@ -280,16 +280,13 @@ document.getElementById('relay-off').addEventListener('click', () => {
 
 function updateSensorReadings(outLevelSeries) {
   if (outLevelSeries && outLevelSeries.length > 0) {
-    console.log('Raw outLevelSeries:', outLevelSeries); // Debug log
-
     // Mengurutkan data berdasarkan timestamp terbaru
     outLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
 
     // Ambil elemen terbaru setelah pengurutan
     const latestData = outLevelSeries[0];
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
-    console.log('Mapped pintu2 values:', pintu2); // Debug log after mapping
-
+ 
     const timestamps = outLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
@@ -303,10 +300,6 @@ function updateSensorReadings(outLevelSeries) {
       };
       return date.toLocaleString('id-ID', options);
     });
-
-    console.log('Processed pintu2 values:', pintu2); // Debug log
-    console.log('Processed timestamps:', timestamps); // Debug log
-
     updateBoxes(latestData.value);
     updateCharts('pintu2-history', timestamps, pintu2);
   } else {
@@ -315,8 +308,6 @@ function updateSensorReadings(outLevelSeries) {
 }
 
 function updateBoxes(latestValue) {
-  console.log('updateBoxes called with latestValue:', latestValue); // Debug log
-
   let pintu2Div = document.getElementById('pintu2');
   let pintu2Status = document.getElementById('status-outlet');
 
