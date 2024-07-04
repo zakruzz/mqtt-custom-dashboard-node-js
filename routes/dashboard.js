@@ -204,6 +204,50 @@ router.post('/api/data/:deviceId/control/:action', isAuthenticated, async (req, 
   }
 });
 
+router.post('/v1/watches/:device/measurements/:source', isAuthenticated, async (req, res) => {
+  const { device, source } = req.params;
+  const data = req.body;
+
+  try {
+    const response = await axios.post(`${config.LINK}/v1/watches/${device}/measurements/${source}`, data, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error sending data to the API:', error);
+    res.status(500).json({ error: 'Failed to send data to the API' });
+  }
+});
+
+router.put('/v1/watches/:device/measurements/:source', isAuthenticated, async (req, res) => {
+  const { device, source } = req.params;
+  const data = req.body;
+
+  try {
+    const response = await axios.put(`${config.LINK}/v1/watches/${device}/measurements/${source}`, data, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error sending data to the API:', error);
+    res.status(500).json({ error: 'Failed to send data to the API' });
+  }
+});
+
+router.delete('/v1/watches/:device/measurements/:source', isAuthenticated, async (req, res) => {
+  const { device, source } = req.params;
+
+  try {
+    const response = await axios.delete(`${config.LINK}/v1/watches/${device}/measurements/${source}`, {
+      headers: { Accept: '*/*' },
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error('Error sending data to the API:', error);
+    res.status(500).json({ error: 'Failed to send data to the API' });
+  }
+});
+
 router.get('/pintu1', isAuthenticated, (req, res) => {
   res.render('pages/pintu1', {
     name: config.NAME,

@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%=dashboardTitle%></title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Sharp" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.7.0/nouislider.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.7.0/nouislider.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="./style.css" />
@@ -60,34 +62,54 @@
           </div>
         </div>
 
-        <h2 style="margin-top: 10px">Pengaturan Setpoint</h2>
-        <!-- Set Point Control -->
-        <div class="controls-container">
-          <div class="card controls">
-            <h2>Atur Untuk Setpoint Aman</h2>
-            <input type="range" id="Set-Point-Aman" min="0" max="10" step="1" value="0" />
-            <p>Value: <span id="Set-Point-Aman-value"></span></p>
-            <h2>Atur Untuk Setpoint Siaga 1</h2>
-            <input type="range" id="Set-Point-Siaga-1" min="0" max="10" step="1" value="0" />
-            <p>Value: <span id="Set-Point-Siaga-1-value"></span></p>
-            <h2>Atur Untuk Setpoint Siaga 2</h2>
-            <input type="range" id="Set-Point-Siaga-2" min="0" max="10" step="1" value="0" />
-            <p>Value: <span id="Set-Point-Siaga-2-value"></span></p>
-            <h2>Atur Untuk Setpoint Bahaya</h2>
-            <input type="range" id="Set-Point-Bahaya" min="0" max="10" step="1" value="0" />
-            <p>Value: <span id="Set-Point-Bahaya-value"></span></p>
-            <h2>Atur Untuk Batas Maximal</h2>
-            <input type="range" id="Set-Point-Maximal" min="1" max="10" step="1" value="0" />
-            <p>Value: <span id="Set-Point-Maximal-value"></span></p>
-            <h2>Atur Untuk Batas Minimal</h2>
-            <input type="range" id="Set-Point-Minimal" min="1" max="10" step="1" value="0" />
-            <p>Value: <span id="Set-Point-Minimal-value"></span></p>
-            <button id="Set-Point-Accept" class="control-btn">Accept</button>
+        <div class="histories">
+          <div class="history-charts-pintu2">
+            <h2>Historical Charts</h2>
+            <div id="pintu2-history" class="history-divs"></div>
+            <!-- <div id="pintu2-history" class="history-divs" style="display: none"></div> -->
           </div>
         </div>
 
-        <h2 style="margin-top: 10px">Kontrol Gate Pintu</h2>
-        <!-- Control Cards -->
+        <div class="controls-container-setpoint">
+          <div class="card controls-setpoint">
+            <h2>Atur Setpoint</h2>
+            <div class="sliders-container">
+              <div class="left-sliders">
+                <h2 style="margin-top: 10px">Setpoint Aman</h2>
+                <div style="margin-top: 35px" id="Set-Point-Aman" class="slider"></div>
+                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Aman-value"></span></p>
+
+                <h2 style="margin-top: 10px">Setpoint Siaga 1</h2>
+                <div style="margin-top: 35px" id="Set-Point-Siaga-1" class="slider"></div>
+                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Siaga-1-value"></span></p>
+
+                <h2 style="margin-top: 10px">Setpoint Siaga 2</h2>
+                <div style="margin-top: 35px" id="Set-Point-Siaga-2" class="slider"></div>
+                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Siaga-2-value"></span></p>
+              </div>
+              <div class="right-sliders">
+                <h2 style="margin-top: 10px">Setpoint Bahaya</h2>
+                <div style="margin-top: 35px" id="Set-Point-Bahaya" class="slider"></div>
+                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Bahaya-value"></span></p>
+
+                <h2 style="margin-top: 10px">Batas Maximal</h2>
+                <div style="margin-top: 35px" id="Set-Point-Maximal" class="slider"></div>
+                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Maximal-value"></span></p>
+
+                <h2 style="margin-top: 10px">Batas Minimal</h2>
+                <div style="margin-top: 35px" id="Set-Point-Minimal" class="slider"></div>
+                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Minimal-value"></span></p>
+              </div>
+            </div>
+            <h2 style="margin-top: 10px">Batas Antara Minimal & Maximal</h2>
+            <div style="margin-top: 35px" id="Set-Point-Mid" class="slider"></div>
+            <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Mid-value"></span></p>
+            <button id="Set-Point-Accept" class="control-btn-setpoint">Kirim Setpoint</button>
+            <button id="Set-Point-Update" class="control-btn-setpoint-update">Update Setpoint</button>
+            <button id="Set-Point-Delete" class="control-btn-setpoint-delete">Reset Setpoint</button>
+          </div>
+        </div>
+
         <div class="controls-container">
           <div class="card controls">
             <h2>Kontrol Outlet Gate</h2>
@@ -101,15 +123,7 @@
             <button id="relay-off" class="control-btn">Stop</button>
           </div>
         </div>
-
         <!-- End of Insights -->
-        <div class="histories">
-          <div class="history-charts-pintu1">
-            <h2>Data Grafik</h2>
-            <!-- <div id="pintu1-history" class="history-divs"></div> -->
-            <div id="pintu2-history" class="history-divs"></div>
-          </div>
-        </div>
 
         <div class="data-table">
           <h2>Data Tabel</h2>
@@ -147,21 +161,6 @@
       </div>
     </div>
     <script type="module" src="./page3.js"></script>
-    <!-- <script type="module" src="./mqttService.js"></script> -->
-    <script>
-      function updateSliderBackground(slider) {
-        const value = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
-        slider.style.background = `linear-gradient(to right, #4caf50 0%, #4caf50 ${value}%, #ddd ${value}%, #ddd 100%)`;
-      }
-
-      document.querySelectorAll('input[type="range"]').forEach((slider) => {
-        slider.addEventListener('input', function () {
-          document.getElementById(`${this.id}-value`).textContent = this.value;
-          updateSliderBackground(this);
-        });
-        // Initialize the slider background on page load
-        updateSliderBackground(slider);
-      });
-    </script>
+    <script></script>
   </body>
 </html>

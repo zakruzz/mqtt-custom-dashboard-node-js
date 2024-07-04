@@ -286,7 +286,7 @@ function updateSensorReadings(outLevelSeries) {
     // Ambil elemen terbaru setelah pengurutan
     const latestData = outLevelSeries[0];
     const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
- 
+
     const timestamps = outLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
@@ -436,3 +436,431 @@ function updateTable(outLevelSeries) {
 
   displayTable(currentPage);
 }
+
+// Tambahan di awal untuk menyimpan nilai lower dan upper dari setiap slider
+let slidersData = {
+  'Set-Point-Maximal': { lower: null, upper: null },
+  'Set-Point-Minimal': { lower: null, upper: null },
+  'Set-Point-Mid': { lower: null, upper: null },
+  'Set-Point-Aman': { lower: null, upper: null },
+  'Set-Point-Siaga-1': { lower: null, upper: null },
+  'Set-Point-Siaga-2': { lower: null, upper: null },
+  'Set-Point-Bahaya': { lower: null, upper: null },
+};
+
+// Fungsi untuk mengupdate nilai lower dan upper pada slidersData
+function updateSliderData(sliderId, values) {
+  slidersData[sliderId].lower = values[0];
+  slidersData[sliderId].upper = values[1];
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var sliders = [
+    { id: 'Set-Point-Maximal', values: [5, 9] },
+    { id: 'Set-Point-Minimal', values: [1, 4] },
+    { id: 'Set-Point-Mid', values: [1, 4] },
+    { id: 'Set-Point-Aman', values: [2, 8] },
+    { id: 'Set-Point-Siaga-1', values: [1, 9] },
+    { id: 'Set-Point-Siaga-2', values: [3, 7] },
+    { id: 'Set-Point-Bahaya', values: [4, 6] },
+  ];
+
+  sliders.forEach(function (slider) {
+    var sliderElement = document.getElementById(slider.id);
+    noUiSlider.create(sliderElement, {
+      start: slider.values,
+      connect: true,
+      range: {
+        min: 0,
+        max: 10,
+      },
+      tooltips: [true, true],
+      format: {
+        to: function (value) {
+          return parseInt(value);
+        },
+        from: function (value) {
+          return parseInt(value);
+        },
+      },
+    });
+
+    sliderElement.noUiSlider.on('update', function (values, handle) {
+      document.getElementById(slider.id + '-value').innerHTML = values.join(' - ');
+      updateSliderData(slider.id, values); // Update slidersData dengan nilai baru
+    });
+  });
+});
+
+// Tambahkan event listener untuk tombol accept
+document.getElementById('Set-Point-Accept').addEventListener('click', () => {
+  const data = {
+    evalWindow: {
+      startInterval: 1,
+      windowDuration: 5,
+      timeUnit: 'MINUTES',
+    },
+    watchRules: [
+      {
+        ruleLabel: 'MAXIMAL',
+        evalBoundary: slidersData['Set-Point-Maximal'],
+        evalPriority: 1,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'MINIMAL',
+        evalBoundary: slidersData['Set-Point-Minimal'],
+        evalPriority: 2,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'CLOSE',
+              },
+              skipWhile: 'CLOSED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'MID',
+        evalBoundary: slidersData['Set-Point-Mid'],
+        evalPriority: 3,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'STOP',
+              },
+              skipWhile: 'STOPPED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'NORMAL',
+        evalBoundary: slidersData['Set-Point-Aman'],
+        evalPriority: 4,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'CLOSE',
+              },
+              skipWhile: 'CLOSED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'SIAGA 1',
+        evalBoundary: slidersData['Set-Point-Siaga-1'],
+        evalPriority: 5,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'SIAGA 2',
+        evalBoundary: slidersData['Set-Point-Siaga-2'],
+        evalPriority: 6,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'BAHAYA',
+        evalBoundary: slidersData['Set-Point-Bahaya'],
+        evalPriority: 7,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+    ],
+  };
+
+  fetch('/v1/watches/mandalika2/measurements/waterlevel', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      alert('Data successfully sent to the API');
+    })
+    .catch((error) => {
+      console.error('Error sending data to the API:', error);
+    });
+});
+
+// Tambahkan event listener untuk tombol accept
+document.getElementById('Set-Point-Update').addEventListener('click', () => {
+  const data = {
+    evalWindow: {
+      startInterval: 1,
+      windowDuration: 5,
+      timeUnit: 'MINUTES',
+    },
+    watchRules: [
+      {
+        ruleLabel: 'MAXIMAL',
+        evalBoundary: slidersData['Set-Point-Maximal'],
+        evalPriority: 1,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'MINIMAL',
+        evalBoundary: slidersData['Set-Point-Minimal'],
+        evalPriority: 2,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'CLOSE',
+              },
+              skipWhile: 'CLOSED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'MID',
+        evalBoundary: slidersData['Set-Point-Mid'],
+        evalPriority: 3,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'STOP',
+              },
+              skipWhile: 'STOPPED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'NORMAL',
+        evalBoundary: slidersData['Set-Point-Aman'],
+        evalPriority: 4,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'CLOSE',
+              },
+              skipWhile: 'CLOSED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'SIAGA 1',
+        evalBoundary: slidersData['Set-Point-Siaga-1'],
+        evalPriority: 5,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'SIAGA 2',
+        evalBoundary: slidersData['Set-Point-Siaga-2'],
+        evalPriority: 6,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+      {
+        ruleLabel: 'BAHAYA',
+        evalBoundary: slidersData['Set-Point-Bahaya'],
+        evalPriority: 7,
+        responseAction: {
+          commandSpecs: [
+            {
+              targetIdentifier: {
+                device: 'mandalika2',
+                target: 'watergate',
+              },
+              commandValue: {
+                value: 'OPEN',
+              },
+              skipWhile: 'OPENED',
+              executePriority: 1,
+            },
+          ],
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      },
+    ],
+  };
+
+  fetch('/v1/watches/mandalika2/measurements/waterlevel', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      alert('Data successfully sent to the API');
+    })
+    .catch((error) => {
+      console.error('Error sending data to the API:', error);
+    });
+});
+
+// Tambahkan event listener untuk tombol reset
+document.getElementById('Set-Point-Delete').addEventListener('click', () => {
+  fetch('/v1/watches/mandalika2/measurements/waterlevel', {
+    method: 'DELETE',
+    headers: {
+      Accept: '*/*',
+    },
+  })
+    .then((response) => {
+      if (response.ok) {
+        alert('Setpoint successfully reset');
+      } else {
+        return response.text().then((text) => {
+          throw new Error(text);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error('Error resetting setpoint:', error);
+      alert('Failed to reset setpoint');
+    });
+});
