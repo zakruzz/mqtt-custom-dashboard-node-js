@@ -191,7 +191,7 @@ function setupSSEDeviceStatus(deviceId) {
   const eventSource = new EventSource(`/api/devicesEvents/${deviceId}`);
   eventSource.addEventListener('device-status-change', (event) => {
     const data = JSON.parse(event.data);
-    const statusElement = document.getElementById('connection-status2');
+    const statusElement = document.getElementById('connection-status1');
     if (data.currentState) {
       if (data.currentState === 'CONNECTED') {
         statusElement.innerText = 'CONNECTED';
