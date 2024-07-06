@@ -6,5 +6,15 @@
   "PINTU2_TITLE": "DASHBOARD Outlet Gate",
   "LINK": "http://api.aturair.xyz",
   "DEVICE_ID_1": "mandalika1",
-  "DEVICE_ID_2": "mandalika2"
+  "DEVICE_ID_2": "mandalika2",
+  "client_id": "sitp.fe",
+  "auth_server": "http://auth.aturair.xyz",
+  "redirect_uri": {
+    "local": "http://localhost:3001/authorized",
+    "server": "http://fe.aturair.xyz/authorized"
+  },
+  "logout_redirect_uri": {
+    "local": "http://localhost:3001/loggedout",
+    "server": "http://fe.aturair.xyz/loggedout"
+  }
 }

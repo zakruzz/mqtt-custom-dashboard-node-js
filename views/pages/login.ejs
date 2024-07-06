@@ -61,23 +61,8 @@
     <div class="login-container">
       <h2>Login</h2>
       <form action="/login" method="POST">
-        <div>
-          <label for="username">Username:</label>
-          <input type="text" id="username" name="username" required />
-        </div>
-        <div>
-          <label for="password">Password:</label>
-          <input type="password" id="password" name="password" required />
-        </div>
-        <button type="submit">Login</button>
-        <button type="button" id="forgot-password-btn">Forgot Password</button>
+        <button type="submit">Login With OAuth2</button>
       </form>
     </div>
-
-    <script>
-      document.getElementById('forgot-password-btn').addEventListener('click', function () {
-        alert('Your password is: admin');
-      });
-    </script>
   </body>
 </html>

@@ -73,6 +73,7 @@ window.addEventListener('load', async () => {
   await fetchInitialData('mandalika1', 'waterlevel');
   await fetchInitialStatus('mandalika1');
   await fetchInitialControlStatus('mandalika1');
+  await fetchInitialDataSlider('mandalika1', 'waterlevel');
 
   setupSSEMeasurements('mandalika1');
   setupSSEDeviceStatus('mandalika1');
@@ -87,6 +88,42 @@ async function fetchInitialData(deviceId, source) {
     const data = response.data;
     updateSensorReadings(data.series);
     updateTable(data.series);
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
+  }
+}
+
+// Function to fetch initial slider data from API
+let watchRules = []; // Definisikan watchRules di luar fungsi fetchInitialDataSlider
+
+async function fetchInitialDataSlider(device, source) {
+  try {
+    const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
+    const data = response.data;
+    console.log(data.watchRules);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Maximal');
+    sliderAman.noUiSlider.set([data.watchRules[0].evalBoundary.lower, data.watchRules[0].evalBoundary.upper]);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Minimal');
+    sliderAman.noUiSlider.set([data.watchRules[1].evalBoundary.lower, data.watchRules[1].evalBoundary.upper]);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Mid');
+    sliderAman.noUiSlider.set([data.watchRules[2].evalBoundary.lower, data.watchRules[2].evalBoundary.upper]);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Aman');
+    sliderAman.noUiSlider.set([data.watchRules[3].evalBoundary.lower, data.watchRules[3].evalBoundary.upper]);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Siaga-1');
+    sliderAman.noUiSlider.set([data.watchRules[4].evalBoundary.lower, data.watchRules[4].evalBoundary.upper]);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Siaga-2');
+    sliderAman.noUiSlider.set([data.watchRules[5].evalBoundary.lower, data.watchRules[5].evalBoundary.upper]);
+    // Update slider 'Set-Point-Aman' with new values
+    var sliderAman = document.getElementById('Set-Point-Bahaya');
+    sliderAman.noUiSlider.set([data.watchRules[6].evalBoundary.lower, data.watchRules[6].evalBoundary.upper]);
+
+    console.log('Updated slidersData and watchRules:', slidersData, watchRules);
   } catch (error) {
     console.error('Error fetching initial data:', error);
   }
@@ -137,7 +174,6 @@ async function fetchInitialControlStatus(deviceId) {
     console.error('Error fetching initial control status:', error);
   }
 }
-
 function setupSSEMeasurements(deviceId) {
   const eventSource = new EventSource(`/api/measurementsEvents/${deviceId}`);
 
@@ -440,7 +476,8 @@ function updateTable(inLevelSeries) {
   displayTable(currentPage);
 }
 
-// Tambahan di awal untuk menyimpan nilai lower dan upper dari setiap slider
+// Tambahan di awal untuk menyimpan referensi ke setiap slider
+let sliders = {};
 let slidersData = {
   'Set-Point-Maximal': { lower: null, upper: null },
   'Set-Point-Minimal': { lower: null, upper: null },
@@ -458,24 +495,24 @@ function updateSliderData(sliderId, values) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  var sliders = [
-    { id: 'Set-Point-Maximal', values: [5, 9] },
-    { id: 'Set-Point-Minimal', values: [1, 4] },
-    { id: 'Set-Point-Mid', values: [1, 4] },
-    { id: 'Set-Point-Aman', values: [2, 8] },
-    { id: 'Set-Point-Siaga-1', values: [1, 9] },
-    { id: 'Set-Point-Siaga-2', values: [3, 7] },
-    { id: 'Set-Point-Bahaya', values: [4, 6] },
+  var sliderConfigs = [
+    { id: 'Set-Point-Maximal', values: [0, 0] },
+    { id: 'Set-Point-Minimal', values: [0, 0] },
+    { id: 'Set-Point-Mid', values: [0, 0] },
+    { id: 'Set-Point-Aman', values: [0, 0] },
+    { id: 'Set-Point-Siaga-1', values: [0, 0] },
+    { id: 'Set-Point-Siaga-2', values: [0, 0] },
+    { id: 'Set-Point-Bahaya', values: [0, 0] },
   ];
 
-  sliders.forEach(function (slider) {
-    var sliderElement = document.getElementById(slider.id);
+  sliderConfigs.forEach(function (sliderConfig) {
+    var sliderElement = document.getElementById(sliderConfig.id);
     noUiSlider.create(sliderElement, {
-      start: slider.values,
+      start: sliderConfig.values,
       connect: true,
       range: {
         min: 0,
-        max: 10,
+        max: 1000,
       },
       tooltips: [true, true],
       format: {
@@ -488,9 +525,12 @@ document.addEventListener('DOMContentLoaded', function () {
       },
     });
 
+    // Simpan referensi ke slider dalam objek sliders
+    sliders[sliderConfig.id] = sliderElement;
+
     sliderElement.noUiSlider.on('update', function (values, handle) {
-      document.getElementById(slider.id + '-value').innerHTML = values.join(' - ');
-      updateSliderData(slider.id, values); // Update slidersData dengan nilai baru
+      document.getElementById(sliderConfig.id + '-value').innerHTML = values.join(' - ');
+      updateSliderData(sliderConfig.id, values); // Update slidersData dengan nilai baru
     });
   });
 });
@@ -507,7 +547,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
       {
         ruleLabel: 'MAXIMAL',
         evalBoundary: slidersData['Set-Point-Maximal'],
-        evalPriority: 1,
+        evalPriority: 7,
         responseAction: {
           commandSpecs: [
             {
@@ -519,7 +559,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 7,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -540,7 +580,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'CLOSE',
               },
               skipWhile: 'CLOSED',
-              executePriority: 1,
+              executePriority: 2,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -561,7 +601,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'STOP',
               },
               skipWhile: 'STOPPED',
-              executePriority: 1,
+              executePriority: 3,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -582,7 +622,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'CLOSE',
               },
               skipWhile: 'CLOSED',
-              executePriority: 1,
+              executePriority: 4,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -603,7 +643,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 5,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -624,7 +664,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 6,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -645,7 +685,7 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 7,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -661,11 +701,24 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
       'Content-Type': 'application/json',
     },
   })
-    .then((response) => response.json())
+    .then((response) => {
+      if (response.status === 409) {
+        // Throw an error to handle the 409 status
+        return response.text().then((text) => {
+          throw new Error(text || 'Conflict');
+        });
+      }
+      return response.json();
+    })
     .then((data) => {
-      alert('Data successfully sent to the API');
+      alert('Setpoint telah diatur');
     })
     .catch((error) => {
+      if (error.message === 'Conflict') {
+        alert('Ups! Mungkin Sebelumnya Anda Sudah Mengatur Setpoint! Silahkan Rubah Slider Kemudian Tekan Tombol Update Setpoint Untuk Memperbaruinya!');
+      } else {
+        alert('Ups! Mungkin Ada Kesalahan Kodingan atau Mungkin Sebelumnya Anda Sudah Mengatur Setpoint! Silahkan Rubah Slider Kemudian Tekan Tombol Update Setpoint Untuk Memperbaruinya!');
+      }
       console.error('Error sending data to the API:', error);
     });
 });
@@ -715,7 +768,7 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
                 value: 'CLOSE',
               },
               skipWhile: 'CLOSED',
-              executePriority: 1,
+              executePriority: 2,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -736,7 +789,7 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
                 value: 'STOP',
               },
               skipWhile: 'STOPPED',
-              executePriority: 1,
+              executePriority: 3,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -757,7 +810,7 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
                 value: 'CLOSE',
               },
               skipWhile: 'CLOSED',
-              executePriority: 1,
+              executePriority: 4,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -778,7 +831,7 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 5,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -799,7 +852,7 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 6,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -820,7 +873,7 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
                 value: 'OPEN',
               },
               skipWhile: 'OPENED',
-              executePriority: 1,
+              executePriority: 7,
             },
           ],
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -838,9 +891,10 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert('Data successfully sent to the API');
+      alert('Setpoint telah diperbarui');
     })
     .catch((error) => {
+      alert('Ups! Mungkin Ada Kesalahan Kodingan!');
       console.error('Error sending data to the API:', error);
     });
 });
@@ -855,7 +909,16 @@ document.getElementById('Set-Point-Delete').addEventListener('click', () => {
   })
     .then((response) => {
       if (response.ok) {
-        alert('Setpoint successfully reset');
+        alert('Setpoint Berhasil direset! Silahkan Atur Ulang Kembali Setpoint!');
+
+        // Set semua slider ke 0 setelah setpoint direset
+        for (const sliderId in sliders) {
+          if (sliders.hasOwnProperty(sliderId)) {
+            console.log(`Resetting slider ${sliderId} to [0, 0]`);
+            sliders[sliderId].noUiSlider.set([0, 0]);
+            updateSliderData(sliderId, [0, 0]); // Update slidersData dengan nilai baru
+          }
+        }
       } else {
         return response.text().then((text) => {
           throw new Error(text);

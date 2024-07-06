@@ -14,7 +14,7 @@ app.use(express.static('public'));
 // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.urlencoded({ extended: true }));
 
-//Use CORS middleware
+// Use CORS middleware
 app.use(cors());
 
 // Session middleware
