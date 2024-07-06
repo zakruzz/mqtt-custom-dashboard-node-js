@@ -43,7 +43,7 @@ router.get('/', (req, res) => {
   const params = {
     response_type: 'code',
     client_id: config.client_id,
-    redirect_uri: config.redirect_uri.local,
+    redirect_uri: config.redirect_uri.server,
     scope: 'openid profile',
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
@@ -60,7 +60,7 @@ router.get('/login', (req, res) => {
   const params = {
     response_type: 'code',
     client_id: config.client_id,
-    redirect_uri: config.redirect_uri.local,
+    redirect_uri: config.redirect_uri.server,
     scope: 'openid profile',
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
@@ -80,7 +80,7 @@ router.get('/authorized', async (req, res) => {
       querystring.stringify({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: config.redirect_uri.local,
+        redirect_uri: config.redirect_uri.server,
         client_id: config.client_id,
         code_verifier: codeVerifier,
       }),
@@ -105,7 +105,7 @@ router.get('/logout', async (req, res) => {
     const idToken = req.session.user.idToken;
     const endSessionUrl = `${config.auth_server}/connect/logout?${querystring.stringify({
       id_token_hint: idToken,
-      post_logout_redirect_uri: config.logout_redirect_uri.local,
+      post_logout_redirect_uri: config.logout_redirect_uri.server,
     })}`;
 
     req.session.destroy((err) => {
