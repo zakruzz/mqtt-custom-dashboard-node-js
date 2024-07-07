@@ -738,8 +738,8 @@ p {
   }
 
   .card.controls {
-    flex: 1 1 200px; /* ukuran minimum 200px, akan berkembang sesuai ruang yang tersedia */
-    max-width: 300px; /* batas maksimum lebar */
+    flex: 1 1 150px; /* ukuran minimum 200px, akan berkembang sesuai ruang yang tersedia */
+    max-width: 170px; /* batas maksimum lebar */
     padding: 10px; /* menambahkan sedikit ruang dalam kartu */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* sedikit bayangan untuk penekanan */
     border-radius: 5px; /* sudut membulat */
