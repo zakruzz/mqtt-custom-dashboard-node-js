@@ -942,7 +942,7 @@ async function startInterval() {
     }
   }
 
-  setInterval(startSSE, 5000);
+  setInterval(startSSE, 35000);
 }
 
 // Mulai interval pertama kali
