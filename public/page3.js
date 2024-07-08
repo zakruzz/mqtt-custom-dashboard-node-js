@@ -916,3 +916,20 @@ document.getElementById('Set-Point-Delete').addEventListener('click', () => {
       alert('Failed to reset setpoint');
     });
 });
+
+async function startInterval() {
+  // Fungsi untuk memulai SSE connections
+  async function startSSE() {
+    try {
+      await fetchInitialData('mandalika2', 'waterlevel');
+      await fetchInitialStatus('mandalika2');
+    } catch (error) {
+      console.error('Error saat menjalankan fungsi SSE:', error);
+    }
+  }
+
+  setInterval(startSSE, 5000);
+}
+
+// Mulai interval pertama kali
+startInterval();
