@@ -396,19 +396,26 @@ function setupSSEDeviceStatus(deviceId) {
 
 async function startInterval() {
   // Fungsi untuk memulai SSE connections
-  async function startSSE() {
+  async function startSSEManualDevice() {
     try {
-      await fetchInitialData('mandalika1', 'waterlevel');
       await fetchInitialStatus('mandalika1');
-
-      await fetchInitialData('mandalika2', 'waterlevel');
       await fetchInitialStatus('mandalika2');
     } catch (error) {
       console.error('Error saat menjalankan fungsi SSE:', error);
     }
   }
 
-  setInterval(startSSE, 35000);
+  async function startSSEManualSensor() {
+    try {
+      await fetchInitialData('mandalika1', 'waterlevel');
+      await fetchInitialData('mandalika2', 'waterlevel');
+    } catch (error) {
+      console.error('Error saat menjalankan fungsi SSE:', error);
+    }
+  }
+
+  setInterval(startSSEManualSensor, 30000);
+  setInterval(startSSEManualDevice, 1000);
 }
 
 // Mulai interval pertama kali
