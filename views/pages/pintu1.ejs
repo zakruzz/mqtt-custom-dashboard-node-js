@@ -73,20 +73,6 @@
             <button id="relay-on" class="control-btn">Start</button>
             <button id="relay-off" class="control-btn">Stop</button>
           </div>
-
-          <!-- <div class="controls-container">
-            <div class="card controls">
-              <h2>Kontrol Outlet Gate</h2>
-              <button id="pintu1-up" class="control-btn">Open</button>
-              <button id="pintu1-down" class="control-btn">Close</button>
-            </div>
-
-            <div class="card controls">
-              <h2>Kontrol Start/Stop Relay</h2>
-              <button id="relay-on" class="control-btn">Start</button>
-              <button id="relay-off" class="control-btn">Stop</button>
-            </div>
-          </div> -->
         </div>
 
         <div class="histories">
@@ -99,43 +85,120 @@
 
         <div class="controls-container-setpoint">
           <div class="card controls-setpoint">
-            <h2>Atur Setpoint</h2>
-            <div class="sliders-container">
-              <div class="left-sliders">
-                <h2 style="margin-top: 10px">Setpoint Aman</h2>
-                <div style="margin-top: 35px" id="Set-Point-Aman" class="slider"></div>
-                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Aman-value"></span></p>
+            <h2>Form Pengaturan</h2>
 
-                <h2 style="margin-top: 10px">Setpoint Siaga 1</h2>
-                <div style="margin-top: 35px" id="Set-Point-Siaga-1" class="slider"></div>
-                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Siaga-1-value"></span></p>
-
-                <h2 style="margin-top: 10px">Setpoint Siaga 2</h2>
-                <div style="margin-top: 35px" id="Set-Point-Siaga-2" class="slider"></div>
-                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Siaga-2-value"></span></p>
-              </div>
-              <div class="right-sliders">
-                <h2 style="margin-top: 10px">Setpoint Bahaya</h2>
-                <div style="margin-top: 35px" id="Set-Point-Bahaya" class="slider"></div>
-                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Bahaya-value"></span></p>
-
-                <h2 style="margin-top: 10px">Batas Maximal</h2>
-                <div style="margin-top: 35px" id="Set-Point-Maximal" class="slider"></div>
-                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Maximal-value"></span></p>
-
-                <h2 style="margin-top: 10px">Batas Minimal</h2>
-                <div style="margin-top: 35px" id="Set-Point-Minimal" class="slider"></div>
-                <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Minimal-value"></span></p>
+            <!-- Interval dan Batas Waktu Akhir -->
+            <div class="form-group">
+              <div class="row">
+                <div class="col">
+                  <label for="startInterval">Interval Waktu Mulai (startInterval)</label>
+                  <input type="number" id="startInterval" class="form-control" required />
+                  <small class="form-text text-muted">Atur berapa waktu mulai proses pengecekan</small>
+                </div>
+                <div class="col">
+                  <label for="windowDuration">Batas Waktu Akhir (windowDuration)</label>
+                  <input type="number" id="end-time" class="form-control" required />
+                  <small class="form-text text-muted">Atur berapa lama proses pengecekan</small>
+                </div>
+                <div class="col">
+                  <label for="timeUnit">Satuan Waktu</label>
+                  <select id="timeUnit" class="form-control" required>
+                    <option value="" disabled selected>PILIH SATUAN WAKTU</option>
+                    <option value="MINUTES">MENIT</option>
+                    <option value="SECONDS">DETIK</option>
+                  </select>
+                  <small class="form-text text-muted">Atur untuk time unit yang ingin digunakan</small>
+                </div>
               </div>
             </div>
-            <h2 style="margin-top: 10px">Batas Antara Minimal & Maximal</h2>
-            <div style="margin-top: 35px" id="Set-Point-Mid" class="slider"></div>
-            <p style="margin-top: 10px; font-size: larger">Value: <span id="Set-Point-Mid-value"></span></p>
-            <button id="Set-Point-Accept" class="control-btn-setpoint">Kirim Setpoint</button>
-            <button id="Set-Point-Update" class="control-btn-setpoint-update">Update Setpoint</button>
-            <button id="Set-Point-Delete" class="control-btn-setpoint-delete">Reset Setpoint</button>
+
+            <!-- Garis Pembatas -->
+            <hr />
+
+            <div id="status-parameters">
+              <!-- Status Parameter Template -->
+              <div class="status-parameter" data-index="1">
+                <!-- Nama Status Parameter -->
+                <div class="form-group">
+                  <label for="status-name-1">Nama Status Parameter 1</label>
+                  <input type="text" id="status-name-1" class="form-control" required />
+                  <small class="form-text text-muted">Untuk mengatur nama dari Status yang nanti ditampilkan, contoh : Aman/Siaga 1/Siaga 2/Bahaya</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="range-start-1">Jarak Setpoint</label>
+                  <div class="row">
+                    <div class="col">
+                      <input type="number" id="range-start-1" class="form-control" required />
+                    </div>
+                    <div class="col text-center">
+                      <strong>-</strong>
+                    </div>
+                    <div class="col">
+                      <input type="number" id="range-end-1" class="form-control" required />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="eval-priority-1">Prioritas Pengevaluasi</label>
+                  <input type="number" id="eval-priority-1" class="form-control" required />
+                  <small class="form-text text-muted">Untuk mengatur nomor prioritas pengevaluasian rule, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU RULE-NYA</small>
+                </div>
+
+                <!-- bagian dari pintu1.ejs -->
+                <div class="form-group">
+                  <label for="execution-command-1">Perintah Pengeksekusian</label>
+                  <div class="execution-parameters">
+                    <div class="execution-parameter-wrapper" data-index="1">
+                      <div class="execution-parameter" data-index="1">
+                        <select id="execution-command-1-1" class="form-control" required>
+                          <option value="" disabled selected>PILIH PERINTAH</option>
+                          <option value="OPEN">BUKA</option>
+                          <option value="CLOSE">TUTUP</option>
+                          <option value="START">MULAI</option>
+                          <option value="STOP">BERHENTI</option>
+                        </select>
+                        <small class="form-text text-muted">Untuk mengatur perintah pengeksekusian dari status yang akan dibuat</small>
+                      </div>
+                      <div class="execution-priority" data-index="1">
+                        <label for="execution-priority-1-1">Prioritas Pengeksekusian</label>
+                        <input type="number" id="execution-priority-1-1" class="form-control" required />
+                        <small class="form-text text-muted">Untuk mengatur nomor prioritas pengeksekusian perintah, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU PERINTAHNYA</small>
+                      </div>
+                    </div>
+                    <div class="execution-buttons">
+                      <button class="control-btn-add-execution" title="Tambah Perintah Pengeksekusian">Tambah Pengeksekusi</button>
+                      <button class="control-btn-delete-execution" title="Hapus Perintah Pengeksekusian">Kurangi Pengeksekusi</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tombol Hapus Status -->
+                <button class="control-btn-delete-status">Hapus Rule</button>
+              </div>
+            </div>
+
+            <button id="add-status" class="control-btn-add-status">Tambah Rule</button>
+            <hr />
+
+            <!-- Tombol Aksi -->
+            <div class="form-group">
+              <div class="row">
+                <div class="col">
+                  <button id="Set-Point-Accept" class="control-btn-setpoint">Kirim Setpoint</button>
+                </div>
+                <div class="col">
+                  <button id="Set-Point-Update" class="control-btn-setpoint-update">Update Setpoint</button>
+                </div>
+                <div class="col">
+                  <button id="Set-Point-Delete" class="control-btn-setpoint-delete">Reset Setpoint</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
         <!-- End of Insights -->
 
         <div class="data-table">

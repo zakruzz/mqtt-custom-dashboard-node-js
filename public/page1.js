@@ -120,9 +120,11 @@ window.addEventListener('load', async (event) => {
   // Initial data fetch
   await fetchInitialData('mandalika1', 'waterlevel');
   await fetchInitialStatus('mandalika1');
+  await fetchInitialDataSetpointMandalika1('mandalika1', 'waterlevel');
 
   await fetchInitialData('mandalika2', 'waterlevel');
   await fetchInitialStatus('mandalika2');
+  await fetchInitialDataSetpointMandalika2('mandalika2', 'waterlevel');
 
   // Setup SSE connections for device status
   setupSSEDeviceStatus('mandalika1');
@@ -147,12 +149,40 @@ let newoutLevelYArray = [];
 let MAX_GRAPH_POINTS = 12;
 let ctr = 0;
 
+let watchRulesMandalika1 = []; // Definisikan watchRules di luar fungsi fetchInitialDataSetpoint
+
+async function fetchInitialDataSetpointMandalika1(device, source) {
+  try {
+    const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
+    const data = response.data;
+    watchRulesMandalika1 = data.watchRules;
+    console.log(watchRulesMandalika1);
+    console.log('Watch Rules:', watchRules);
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
+  }
+}
+
+let watchRulesMandalika2 = []; // Definisikan watchRules di luar fungsi fetchInitialDataSetpoint
+
+async function fetchInitialDataSetpointMandalika2(device, source) {
+  try {
+    const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
+    const data = response.data;
+    watchRulesMandalika2 = data.watchRules;
+    console.log(watchRulesMandalika2);
+    console.log('Watch Rules:', watchRules);
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
+  }
+}
+
 function updateSensorReadings(inLevelSeries, outLevelSeries) {
   let latestInLevelValue = null;
   let latestOutLevelValue = null;
 
   // Memproses data untuk Inlet Gate
-  if (inLevelSeries && inLevelSeries.length >= 0) {
+  if (inLevelSeries && inLevelSeries.length > 0) {
     // Sortir data berdasarkan timestamp (terbaru ke terlama)
     inLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -177,10 +207,12 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
 
     // Memperbarui grafik
     updateCharts('pintu1-history', timestamps, pintu1);
+    // Memperbarui kotak tampilan dengan nilai terbaru dari pintu1
+    updateInletBox(Number(latestInLevelValue));
   }
 
   // Memproses data untuk Outlet Gate
-  if (outLevelSeries && outLevelSeries.length >= 0) {
+  if (outLevelSeries && outLevelSeries.length > 0) {
     // Sortir data berdasarkan timestamp (terbaru ke terlama)
     outLevelSeries.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -206,54 +238,103 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
 
     // Memperbarui grafik
     updateCharts('pintu2-history', timestamps, pintu2);
+    // Memperbarui kotak tampilan dengan nilai terbaru dari pintu2
+    updateOutletBox(Number(latestOutLevelValue));
   }
-
-  // Memperbarui kotak tampilan dengan nilai terbaru dari kedua pintu
-  updateBoxes(latestInLevelValue, latestOutLevelValue);
 }
 
-function updateBoxes(pintu1, pintu2) {
-  let pintu1Div = document.getElementById('pintu1');
-  let pintu2Div = document.getElementById('pintu2');
-  let pintu1Status = document.getElementById('status-inlet');
-  let pintu2Status = document.getElementById('status-outlet');
-
-  if (pintu1 !== null) {
-    pintu1Div.innerHTML = pintu1 + ' M'; // Menggunakan 'M' sebagai satuan
-    if (pintu1Status) {
-      if (pintu1 <= 200) {
-        pintu1Status.innerText = 'Aman';
-        pintu1Status.style.color = 'rgb(99, 209, 35)'; // Warna hijau
-      } else if (pintu1 <= 400) {
-        pintu1Status.innerText = 'Siaga 1';
-        pintu1Status.style.color = '#ffcc00'; // Warna kuning
-      } else if (pintu1 <= 600) {
-        pintu1Status.innerText = 'Siaga 2';
-        pintu1Status.style.color = '#ff6600'; // Warna oranye
-      } else {
-        pintu1Status.innerText = 'Bahaya';
-        pintu1Status.style.color = '#ff0000'; // Warna merah
-      }
+function getStatusFromValueMandalika1(latestInLevelValue, watchRulesMandalika1) {
+  for (const rule of watchRulesMandalika1) {
+    if (latestInLevelValue >= rule.evalBoundary.lower && latestInLevelValue <= rule.evalBoundary.upper) {
+      return {
+        statusText: rule.ruleLabel,
+        color: getColorFromLabelMandalika1(rule.ruleLabel),
+      };
     }
   }
+  return null;
+}
 
-  if (pintu2 !== null) {
-    pintu2Div.innerHTML = pintu2 + ' M'; // Menggunakan 'M' sebagai satuan
-    if (pintu2Status) {
-      if (pintu2 <= 200) {
-        pintu2Status.innerText = 'Aman';
-        pintu2Status.style.color = 'rgb(99, 209, 35)'; // Warna hijau
-      } else if (pintu2 <= 400) {
-        pintu2Status.innerText = 'Siaga 1';
-        pintu2Status.style.color = '#ffcc00'; // Warna kuning
-      } else if (pintu2 <= 600) {
-        pintu2Status.innerText = 'Siaga 2';
-        pintu2Status.style.color = '#ff6600'; // Warna oranye
-      } else {
-        pintu2Status.innerText = 'Bahaya';
-        pintu2Status.style.color = '#ff0000'; // Warna merah
-      }
+function getColorFromLabelMandalika1(ruleLabel) {
+  switch (ruleLabel) {
+    case 'Aman':
+      return 'rgb(99, 209, 35)'; // Green
+    case 'Siaga 1':
+      return '#ffcc00'; // Yellow
+    case 'Siaga 2':
+      return '#ff6600'; // Orange
+    case 'Bahaya':
+      return '#ff0000'; // Red
+    default:
+      return '#000000'; // Black as default
+  }
+}
+function getStatusFromValueMandalika2(latestOutLevelValue, watchRulesMandalika2) {
+  for (const rule of watchRulesMandalika2) {
+    if (latestOutLevelValue >= rule.evalBoundary.lower && latestOutLevelValue <= rule.evalBoundary.upper) {
+      return {
+        statusText: rule.ruleLabel,
+        color: getColorFromLabelMandalika2(rule.ruleLabel),
+      };
     }
+  }
+  return null;
+}
+
+function getColorFromLabelMandalika2(ruleLabel) {
+  switch (ruleLabel) {
+    case 'Aman':
+      return 'rgb(99, 209, 35)'; // Green
+    case 'Siaga 1':
+      return '#ffcc00'; // Yellow
+    case 'Siaga 2':
+      return '#ff6600'; // Orange
+    case 'Bahaya':
+      return '#ff0000'; // Red
+    default:
+      return '#000000'; // Black as default
+  }
+}
+
+function updateInletBox(latestInLevelValue) {
+  let pintu1Div = document.getElementById('pintu1');
+  let pintu1Status = document.getElementById('status-inlet');
+
+  if (pintu1Div && pintu1Status) {
+    pintu1Div.innerHTML = latestInLevelValue + 'M';
+    const status = getStatusFromValueMandalika1(latestInLevelValue, watchRulesMandalika1);
+    console.log(status);
+
+    if (status) {
+      pintu1Div.innerHTML = latestInLevelValue + 'M';
+      pintu1Status.innerText = status.statusText;
+      pintu1Status.style.color = status.color;
+    } else {
+      console.error('No matching status found for the given value:', latestInLevelValue);
+    }
+  } else {
+    console.error('Inlet gate status element not found');
+  }
+}
+
+function updateOutletBox(latestOutLevelValue) {
+  let pintu2Div = document.getElementById('pintu2');
+  let pintu2Status = document.getElementById('status-outlet');
+
+  if (pintu2Div && pintu2Status) {
+    pintu2Div.innerHTML = latestOutLevelValue + 'M';
+    const status = getStatusFromValueMandalika2(latestOutLevelValue, watchRulesMandalika2);
+    console.log(status);
+    console.log(pintu2Div.innerHTML);
+    if (status) {
+      pintu2Div.innerHTML = latestOutLevelValue + 'M';
+      pintu2Status.innerText = status.statusText;
+      pintu2Status.style.color = status.color;
+    } else {
+      console.error('No matching status found for the given value:', latestOutLevelValue);
+    }
+  } else {
+    console.error('Outlet gate status element not found');
   }
 }
 
@@ -414,7 +495,7 @@ async function startInterval() {
     }
   }
 
-  setInterval(startSSEManualSensor, 30000);
+  setInterval(startSSEManualSensor, 5000);
   setInterval(startSSEManualDevice, 1000);
 }
 

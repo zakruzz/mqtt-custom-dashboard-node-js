@@ -481,19 +481,6 @@ main .histories h2 {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.sliders-container {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.left-sliders,
-.right-sliders {
-  flex: 1;
-  min-width: 300px;
-}
-
 .control-btn-setpoint {
   width: 100%;
   padding: 15px;
@@ -509,6 +496,23 @@ main .histories h2 {
 .control-btn-setpoint:hover {
   background-color: #0056b3;
 }
+
+.control-btn-add-status {
+  width: 100%;
+  padding: 15px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.control-btn-add-status:hover {
+  background-color: #218838;
+}
+
 .control-btn-setpoint-update {
   width: 100%;
   padding: 15px;
@@ -540,52 +544,137 @@ main .histories h2 {
   background-color: #ff5e5e;
 }
 
-input[type='range'] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 10px;
+.control-btn-delete-status {
+  width: 35%;
+  padding: 15px;
+  background-color: #ff0000;
+  color: #fff;
+  border: none;
   border-radius: 5px;
-  background: #ddd;
-  outline: none;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  margin-top: 10px;
+  cursor: pointer;
+  margin-top: 20px;
+  font-size: 16px;
+  margin-bottom: 45px;
 }
 
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background: #4caf50;
+.control-btn-delete-status:hover {
+  background-color: #ff5e5e;
+}
+
+.control-btn-delete-execution,
+.control-btn-add-execution {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 10px; /* Mengubah menjadi rounded rectangle */
+  cursor: pointer;
+  margin: 5px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-btn-delete-execution:hover,
+.control-btn-add-execution:hover {
+  background-color: #0056b3;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.col {
+  flex: 1;
+  padding-right: 10px; /* Menambahkan padding kanan untuk jarak antar kolom */
+}
+
+.col + .col {
+  padding-left: 10px; /* Menambahkan padding kiri untuk kolom kedua */
+}
+
+.col + .col + .col {
+  padding-left: 10px; /* Menambahkan padding kiri untuk kolom kedua */
+}
+
+.col.text-center {
+  flex: 0 0 auto;
+  padding: 0 10px;
+}
+
+.execution-parameters {
+  display: flex;
+  flex-direction: column;
+}
+
+.execution-parameter {
+  flex: 1;
+  margin-bottom: 10px; /* Menambahkan jarak di atas tombol */
+}
+
+.execution-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px; /* Menambahkan jarak di bawah dropdown */
+  margin-top: 10px; /* Menambahkan jarak di bawah dropdown */
+}
+
+.execution-buttons .control-btn-add-execution,
+.execution-buttons .control-btn-delete-execution {
+  flex: 1;
+  padding: 10px;
+  margin: 0 5px;
+  text-align: center;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
   cursor: pointer;
 }
 
-input[type='range']::-moz-range-thumb {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background: #4caf50;
-  cursor: pointer;
+.execution-buttons .control-btn-delete-execution {
+  background-color: #dc3545;
 }
 
-h2 {
-  margin-top: 10px;
-  font-size: 18px;
+.execution-buttons .control-btn-add-execution:hover,
+.execution-buttons .control-btn-delete-execution:hover {
+  background-color: #0056b3;
 }
 
-p {
-  margin-top: 10px;
-  font-size: larger;
+.execution-buttons .control-btn-delete-execution:hover {
+  background-color: #c82333;
 }
 
-.noUi-handle-lower {
-  background-color: red;
-}
-
-.noUi-handle-upper {
-  background-color: green;
+.form-text.text-muted {
+  color: #333 !important;
 }
 
 /* ********RIGHT ********** */

@@ -73,11 +73,13 @@ window.addEventListener('load', async () => {
   await fetchInitialData('mandalika1', 'waterlevel');
   await fetchInitialStatus('mandalika1');
   await fetchInitialControlStatus('mandalika1');
-  await fetchInitialDataSlider('mandalika1', 'waterlevel');
+  await fetchInitialDataSetpoint('mandalika1', 'waterlevel');
 
   setupSSEMeasurements('mandalika1');
   setupSSEDeviceStatus('mandalika1');
   setupSSEControlStatus('mandalika1');
+
+  loadFormData();
 
   handleDeviceChange(mediaQuery);
 });
@@ -93,40 +95,98 @@ async function fetchInitialData(deviceId, source) {
   }
 }
 
-// Function to fetch initial slider data from API
-let watchRules = []; // Definisikan watchRules di luar fungsi fetchInitialDataSlider
+let watchRules = []; // Definisikan watchRules di luar fungsi fetchInitialDataSetpoint
 
-async function fetchInitialDataSlider(device, source) {
+async function fetchInitialDataSetpoint(device, source) {
   try {
     const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
     const data = response.data;
-    console.log(data.watchRules);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Maximal');
-    sliderAman.noUiSlider.set([data.watchRules[0].evalBoundary.lower, data.watchRules[0].evalBoundary.upper]);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Minimal');
-    sliderAman.noUiSlider.set([data.watchRules[1].evalBoundary.lower, data.watchRules[1].evalBoundary.upper]);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Mid');
-    sliderAman.noUiSlider.set([data.watchRules[2].evalBoundary.lower, data.watchRules[2].evalBoundary.upper]);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Aman');
-    sliderAman.noUiSlider.set([data.watchRules[3].evalBoundary.lower, data.watchRules[3].evalBoundary.upper]);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Siaga-1');
-    sliderAman.noUiSlider.set([data.watchRules[4].evalBoundary.lower, data.watchRules[4].evalBoundary.upper]);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Siaga-2');
-    sliderAman.noUiSlider.set([data.watchRules[5].evalBoundary.lower, data.watchRules[5].evalBoundary.upper]);
-    // Update slider 'Set-Point-Aman' with new values
-    var sliderAman = document.getElementById('Set-Point-Bahaya');
-    sliderAman.noUiSlider.set([data.watchRules[6].evalBoundary.lower, data.watchRules[6].evalBoundary.upper]);
-
-    console.log('Updated slidersData and watchRules:', slidersData, watchRules);
+    watchRules = data.watchRules;
+    console.log('Watch Rules:', watchRules);
   } catch (error) {
     console.error('Error fetching initial data:', error);
   }
+}
+
+function loadFormData() {
+  const apiData = JSON.parse(localStorage.getItem('formDataMandalika1'));
+  console.log('Loaded data:', apiData);
+
+  if (apiData) {
+    const evalWindow = apiData.evalWindow;
+    document.getElementById('startInterval').value = evalWindow.startInterval;
+    document.getElementById('end-time').value = evalWindow.windowDuration;
+    document.getElementById('timeUnit').value = evalWindow.timeUnit;
+
+    apiData.statusParameters.forEach((statusParameter, index) => {
+      addStatusParameter();
+      const currentIndex = index + 1;
+
+      document.querySelector(`#status-name-${currentIndex}`).value = statusParameter.ruleLabel;
+      document.querySelector(`#range-start-${currentIndex}`).value = statusParameter.evalBoundary.lower;
+      document.querySelector(`#range-end-${currentIndex}`).value = statusParameter.evalBoundary.upper;
+      document.querySelector(`#eval-priority-${currentIndex}`).value = statusParameter.evalPriority;
+
+      statusParameter.responseAction.commandSpecs.forEach((commandSpec, cmdIndex) => {
+        if (cmdIndex > 0) {
+          addExecutionParameter({ target: document.querySelector(`#status-name-${currentIndex}`).parentElement });
+        }
+        document.querySelector(`#execution-command-${currentIndex}-${cmdIndex + 1}`).value = commandSpec.value;
+        document.querySelector(`#execution-priority-${currentIndex}-${cmdIndex + 1}`).value = commandSpec.priority; // Load executePriority here
+      });
+    });
+  }
+}
+
+function saveFormData() {
+  const evalWindow = {
+    startInterval: parseInt(document.getElementById('startInterval').value, 10),
+    windowDuration: parseInt(document.getElementById('end-time').value, 10),
+    timeUnit: document.getElementById('timeUnit').value,
+  };
+
+  const statusParameters = [];
+  document.querySelectorAll('.status-parameter').forEach((statusParameter, index) => {
+    const ruleLabel = statusParameter.querySelector(`#status-name-${index + 1}`).value;
+    const evalBoundary = {
+      lower: parseFloat(statusParameter.querySelector(`#range-start-${index + 1}`).value),
+      upper: parseFloat(statusParameter.querySelector(`#range-end-${index + 1}`).value),
+    };
+    const evalPriority = parseInt(statusParameter.querySelector(`#eval-priority-${index + 1}`).value, 10);
+
+    if (ruleLabel && !isNaN(evalBoundary.lower) && !isNaN(evalBoundary.upper) && !isNaN(evalPriority)) {
+      const commandSpecs = [];
+      const executionParameters = statusParameter.querySelectorAll('.execution-parameter-wrapper');
+      executionParameters.forEach((executionParameter, cmdIndex) => {
+        const commandValue = executionParameter.querySelector(`#execution-command-${index + 1}-${cmdIndex + 1}`).value;
+        const executePriority = parseInt(executionParameter.querySelector(`#execution-priority-${index + 1}-${cmdIndex + 1}`).value, 10);
+
+        if (commandValue && !isNaN(executePriority)) {
+          commandSpecs.push({
+            value: commandValue,
+            priority: executePriority, // Save executePriority here
+          });
+        }
+      });
+
+      statusParameters.push({
+        ruleLabel: ruleLabel,
+        evalBoundary: evalBoundary,
+        evalPriority: evalPriority,
+        responseAction: {
+          commandSpecs: commandSpecs,
+          actionType: 'DISPATCH_CONTROL_COMMANDS',
+        },
+      });
+    }
+  });
+
+  const formData = {
+    evalWindow: evalWindow,
+    statusParameters: statusParameters,
+  };
+
+  localStorage.setItem('formDataMandalika1', JSON.stringify(formData));
 }
 
 async function fetchInitialStatus(deviceId) {
@@ -339,10 +399,37 @@ function updateSensorReadings(inLevelSeries) {
       return date.toLocaleString('id-ID', options);
     });
 
-    updateBoxes(latestData.value);
+    updateBoxes(Number(latestData.value)); // Ensure the value is a number
     updateCharts('pintu1-history', timestamps, pintu1);
   } else {
     console.error('inLevelSeries is empty or undefined');
+  }
+}
+
+function getStatusFromValue(latestValue, watchRules) {
+  for (const rule of watchRules) {
+    if (latestValue >= rule.evalBoundary.lower && latestValue <= rule.evalBoundary.upper) {
+      return {
+        statusText: rule.ruleLabel,
+        color: getColorFromLabel(rule.ruleLabel),
+      };
+    }
+  }
+  return null;
+}
+
+function getColorFromLabel(ruleLabel) {
+  switch (ruleLabel) {
+    case 'Aman':
+      return 'rgb(99, 209, 35)'; // Green
+    case 'Siaga 1':
+      return '#ffcc00'; // Yellow
+    case 'Siaga 2':
+      return '#ff6600'; // Orange
+    case 'Bahaya':
+      return '#ff0000'; // Red
+    default:
+      return '#000000'; // Black as default
   }
 }
 
@@ -352,18 +439,14 @@ function updateBoxes(latestValue) {
 
   if (pintu1Div && pintu1Status) {
     pintu1Div.innerHTML = latestValue + 'M';
-    if (latestValue <= 200) {
-      pintu1Status.innerText = 'Aman';
-      pintu1Status.style.color = 'rgb(99, 209, 35)'; // Green
-    } else if (latestValue <= 400) {
-      pintu1Status.innerText = 'Siaga 1';
-      pintu1Status.style.color = '#ffcc00';
-    } else if (latestValue <= 600) {
-      pintu1Status.innerText = 'Siaga 2';
-      pintu1Status.style.color = '#ff6600';
+    const status = getStatusFromValue(latestValue, watchRules);
+
+    if (status) {
+      pintu1Div.innerHTML = latestValue + 'M';
+      pintu1Status.innerText = status.statusText;
+      pintu1Status.style.color = status.color;
     } else {
-      pintu1Status.innerText = 'Bahaya';
-      pintu1Status.style.color = '#ff0000';
+      console.error('No matching status found for the given value:', latestValue);
     }
   } else {
     console.error('Inlet gate status element not found');
@@ -476,222 +559,76 @@ function updateTable(inLevelSeries) {
   displayTable(currentPage);
 }
 
-// Tambahan di awal untuk menyimpan referensi ke setiap slider
-let sliders = {};
-let slidersData = {
-  'Set-Point-Maximal': { lower: null, upper: null },
-  'Set-Point-Minimal': { lower: null, upper: null },
-  'Set-Point-Mid': { lower: null, upper: null },
-  'Set-Point-Aman': { lower: null, upper: null },
-  'Set-Point-Siaga-1': { lower: null, upper: null },
-  'Set-Point-Siaga-2': { lower: null, upper: null },
-  'Set-Point-Bahaya': { lower: null, upper: null },
-};
+document.getElementById('Set-Point-Accept').addEventListener('click', () => {
+  const evalWindow = {
+    startInterval: parseInt(document.getElementById('startInterval').value, 10),
+    windowDuration: parseInt(document.getElementById('end-time').value, 10),
+    timeUnit: document.getElementById('timeUnit').value,
+  };
 
-// Fungsi untuk mengupdate nilai lower dan upper pada slidersData
-function updateSliderData(sliderId, values) {
-  slidersData[sliderId].lower = values[0];
-  slidersData[sliderId].upper = values[1];
-}
+  const watchRules = [];
+  const statusParameters = document.querySelectorAll('.status-parameter');
 
-document.addEventListener('DOMContentLoaded', function () {
-  var sliderConfigs = [
-    { id: 'Set-Point-Maximal', values: [0, 0] },
-    { id: 'Set-Point-Minimal', values: [0, 0] },
-    { id: 'Set-Point-Mid', values: [0, 0] },
-    { id: 'Set-Point-Aman', values: [0, 0] },
-    { id: 'Set-Point-Siaga-1', values: [0, 0] },
-    { id: 'Set-Point-Siaga-2', values: [0, 0] },
-    { id: 'Set-Point-Bahaya', values: [0, 0] },
-  ];
+  statusParameters.forEach((statusParameter, index) => {
+    const ruleLabel = statusParameter.querySelector(`#status-name-${index + 1}`).value;
+    const evalBoundary = {
+      lower: parseFloat(statusParameter.querySelector(`#range-start-${index + 1}`).value),
+      upper: parseFloat(statusParameter.querySelector(`#range-end-${index + 1}`).value),
+    };
 
-  sliderConfigs.forEach(function (sliderConfig) {
-    var sliderElement = document.getElementById(sliderConfig.id);
-    noUiSlider.create(sliderElement, {
-      start: sliderConfig.values,
-      connect: true,
-      range: {
-        min: 0,
-        max: 1000,
-      },
-      tooltips: [true, true],
-      format: {
-        to: function (value) {
-          return parseInt(value);
+    const evalPriority = parseInt(statusParameter.querySelector(`#eval-priority-${index + 1}`).value, 10);
+
+    const commandSpecs = [];
+    const executionParameters = statusParameter.querySelectorAll('.execution-parameter-wrapper');
+    executionParameters.forEach((executionParameter, cmdIndex) => {
+      const commandValue = executionParameter.querySelector(`#execution-command-${index + 1}-${cmdIndex + 1}`).value;
+      const executePriority = parseInt(executionParameter.querySelector(`#execution-priority-${index + 1}-${cmdIndex + 1}`).value, 10);
+
+      let skipWhile;
+      switch (commandValue) {
+        case 'START':
+          skipWhile = 'STARTED';
+          break;
+        case 'STOP':
+          skipWhile = 'STOPPED';
+          break;
+        case 'OPEN':
+          skipWhile = 'OPENED';
+          break;
+        case 'CLOSE':
+          skipWhile = 'CLOSED';
+          break;
+        default:
+          skipWhile = '';
+      }
+
+      commandSpecs.push({
+        targetIdentifier: {
+          device: 'mandalika1',
+          target: 'watergate',
         },
-        from: function (value) {
-          return parseInt(value);
+        commandValue: {
+          value: commandValue,
         },
-      },
+        skipWhile: skipWhile,
+        executePriority: executePriority,
+      });
     });
 
-    // Simpan referensi ke slider dalam objek sliders
-    sliders[sliderConfig.id] = sliderElement;
-
-    sliderElement.noUiSlider.on('update', function (values, handle) {
-      document.getElementById(sliderConfig.id + '-value').innerHTML = values.join(' - ');
-      updateSliderData(sliderConfig.id, values); // Update slidersData dengan nilai baru
+    watchRules.push({
+      ruleLabel: ruleLabel,
+      evalBoundary: evalBoundary,
+      evalPriority: evalPriority,
+      responseAction: {
+        commandSpecs: commandSpecs,
+        actionType: 'DISPATCH_CONTROL_COMMANDS',
+      },
     });
   });
-});
 
-// Tambahkan event listener untuk tombol accept
-document.getElementById('Set-Point-Accept').addEventListener('click', () => {
   const data = {
-    evalWindow: {
-      startInterval: 1,
-      windowDuration: 5,
-      timeUnit: 'MINUTES',
-    },
-    watchRules: [
-      {
-        ruleLabel: 'MAXIMAL',
-        evalBoundary: slidersData['Set-Point-Maximal'],
-        evalPriority: 7,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 7,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'MINIMAL',
-        evalBoundary: slidersData['Set-Point-Minimal'],
-        evalPriority: 2,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'CLOSE',
-              },
-              skipWhile: 'CLOSED',
-              executePriority: 2,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'MID',
-        evalBoundary: slidersData['Set-Point-Mid'],
-        evalPriority: 3,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'STOP',
-              },
-              skipWhile: 'STOPPED',
-              executePriority: 3,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'NORMAL',
-        evalBoundary: slidersData['Set-Point-Aman'],
-        evalPriority: 4,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'CLOSE',
-              },
-              skipWhile: 'CLOSED',
-              executePriority: 4,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'SIAGA 1',
-        evalBoundary: slidersData['Set-Point-Siaga-1'],
-        evalPriority: 5,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 5,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'SIAGA 2',
-        evalBoundary: slidersData['Set-Point-Siaga-2'],
-        evalPriority: 6,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 6,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'BAHAYA',
-        evalBoundary: slidersData['Set-Point-Bahaya'],
-        evalPriority: 7,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 7,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-    ],
+    evalWindow: evalWindow,
+    watchRules: watchRules,
   };
 
   fetch('/v1/watches/mandalika1/measurements/waterlevel', {
@@ -703,7 +640,6 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
   })
     .then((response) => {
       if (response.status === 409) {
-        // Throw an error to handle the 409 status
         return response.text().then((text) => {
           throw new Error(text || 'Conflict');
         });
@@ -711,6 +647,11 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
       return response.json();
     })
     .then((data) => {
+      // Simpan data ke localStorage setelah berhasil submit
+      localStorage.setItem('apiDataMandalika1', JSON.stringify({ evalWindow, watchRules }));
+      saveFormData();
+      // Refresh the page
+      location.reload();
       alert('Setpoint telah diatur');
     })
     .catch((error) => {
@@ -723,163 +664,76 @@ document.getElementById('Set-Point-Accept').addEventListener('click', () => {
     });
 });
 
-// Tambahkan event listener untuk tombol accept
 document.getElementById('Set-Point-Update').addEventListener('click', () => {
+  const evalWindow = {
+    startInterval: parseInt(document.getElementById('startInterval').value, 10),
+    windowDuration: parseInt(document.getElementById('end-time').value, 10),
+    timeUnit: document.getElementById('timeUnit').value,
+  };
+
+  const watchRules = [];
+  const statusParameters = document.querySelectorAll('.status-parameter');
+
+  statusParameters.forEach((statusParameter, index) => {
+    const ruleLabel = statusParameter.querySelector(`#status-name-${index + 1}`).value;
+    const evalBoundary = {
+      lower: parseFloat(statusParameter.querySelector(`#range-start-${index + 1}`).value),
+      upper: parseFloat(statusParameter.querySelector(`#range-end-${index + 1}`).value),
+    };
+
+    const evalPriority = parseInt(statusParameter.querySelector(`#eval-priority-${index + 1}`).value, 10);
+
+    const commandSpecs = [];
+    const executionParameters = statusParameter.querySelectorAll('.execution-parameter-wrapper');
+    executionParameters.forEach((executionParameter, cmdIndex) => {
+      const commandValue = executionParameter.querySelector(`#execution-command-${index + 1}-${cmdIndex + 1}`).value;
+      const executePriority = parseInt(executionParameter.querySelector(`#execution-priority-${index + 1}-${cmdIndex + 1}`).value, 10);
+
+      let skipWhile;
+      switch (commandValue) {
+        case 'START':
+          skipWhile = 'STARTED';
+          break;
+        case 'STOP':
+          skipWhile = 'STOPPED';
+          break;
+        case 'OPEN':
+          skipWhile = 'OPENED';
+          break;
+        case 'CLOSE':
+          skipWhile = 'CLOSED';
+          break;
+        default:
+          skipWhile = '';
+      }
+
+      commandSpecs.push({
+        targetIdentifier: {
+          device: 'mandalika1',
+          target: 'watergate',
+        },
+        commandValue: {
+          value: commandValue,
+        },
+        skipWhile: skipWhile,
+        executePriority: executePriority,
+      });
+    });
+
+    watchRules.push({
+      ruleLabel: ruleLabel,
+      evalBoundary: evalBoundary,
+      evalPriority: evalPriority,
+      responseAction: {
+        commandSpecs: commandSpecs,
+        actionType: 'DISPATCH_CONTROL_COMMANDS',
+      },
+    });
+  });
+
   const data = {
-    evalWindow: {
-      startInterval: 1,
-      windowDuration: 5,
-      timeUnit: 'MINUTES',
-    },
-    watchRules: [
-      {
-        ruleLabel: 'MAXIMAL',
-        evalBoundary: slidersData['Set-Point-Maximal'],
-        evalPriority: 1,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 1,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'MINIMAL',
-        evalBoundary: slidersData['Set-Point-Minimal'],
-        evalPriority: 2,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'CLOSE',
-              },
-              skipWhile: 'CLOSED',
-              executePriority: 2,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'MID',
-        evalBoundary: slidersData['Set-Point-Mid'],
-        evalPriority: 3,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'STOP',
-              },
-              skipWhile: 'STOPPED',
-              executePriority: 3,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'NORMAL',
-        evalBoundary: slidersData['Set-Point-Aman'],
-        evalPriority: 4,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'CLOSE',
-              },
-              skipWhile: 'CLOSED',
-              executePriority: 4,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'SIAGA 1',
-        evalBoundary: slidersData['Set-Point-Siaga-1'],
-        evalPriority: 5,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 5,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'SIAGA 2',
-        evalBoundary: slidersData['Set-Point-Siaga-2'],
-        evalPriority: 6,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 6,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-      {
-        ruleLabel: 'BAHAYA',
-        evalBoundary: slidersData['Set-Point-Bahaya'],
-        evalPriority: 7,
-        responseAction: {
-          commandSpecs: [
-            {
-              targetIdentifier: {
-                device: 'mandalika1',
-                target: 'watergate',
-              },
-              commandValue: {
-                value: 'OPEN',
-              },
-              skipWhile: 'OPENED',
-              executePriority: 7,
-            },
-          ],
-          actionType: 'DISPATCH_CONTROL_COMMANDS',
-        },
-      },
-    ],
+    evalWindow: evalWindow,
+    watchRules: watchRules,
   };
 
   fetch('/v1/watches/mandalika1/measurements/waterlevel', {
@@ -891,6 +745,11 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
+      // Simpan data ke localStorage setelah berhasil submit
+      localStorage.setItem('apiDataMandalika1', JSON.stringify({ evalWindow, watchRules }));
+      saveFormData();
+      // Refresh the page
+      location.reload();
       alert('Setpoint telah diperbarui');
     })
     .catch((error) => {
@@ -899,7 +758,6 @@ document.getElementById('Set-Point-Update').addEventListener('click', () => {
     });
 });
 
-// Tambahkan event listener untuk tombol reset
 document.getElementById('Set-Point-Delete').addEventListener('click', () => {
   fetch('/v1/watches/mandalika1/measurements/waterlevel', {
     method: 'DELETE',
@@ -911,14 +769,58 @@ document.getElementById('Set-Point-Delete').addEventListener('click', () => {
       if (response.ok) {
         alert('Setpoint Berhasil direset! Silahkan Atur Ulang Kembali Setpoint!');
 
-        // Set semua slider ke 0 setelah setpoint direset
-        for (const sliderId in sliders) {
-          if (sliders.hasOwnProperty(sliderId)) {
-            console.log(`Resetting slider ${sliderId} to [0, 0]`);
-            sliders[sliderId].noUiSlider.set([0, 0]);
-            updateSliderData(sliderId, [0, 0]); // Update slidersData dengan nilai baru
+        // Clear all form elements
+        const formElements = document.querySelectorAll('input, select, textarea');
+        formElements.forEach((element) => {
+          if (element.type === 'checkbox' || element.type === 'radio') {
+            element.checked = false;
+          } else {
+            element.value = '';
+          }
+        });
+
+        // Remove all status parameters except the first one
+        const statusParameters = document.querySelectorAll('.status-parameter');
+        statusParameters.forEach((parameter, index) => {
+          if (index !== 0) {
+            parameter.remove();
+          }
+        });
+
+        // Reset the first status parameter's fields
+        const firstStatusParameter = document.querySelector('.status-parameter');
+        if (firstStatusParameter) {
+          firstStatusParameter.querySelectorAll('input, select, textarea').forEach((element) => {
+            if (element.type === 'checkbox' || element.type === 'radio') {
+              element.checked = false;
+            } else {
+              element.value = '';
+            }
+          });
+
+          // Remove additional execution parameters
+          const executionParameters = firstStatusParameter.querySelectorAll('.execution-parameter-wrapper');
+          executionParameters.forEach((param, index) => {
+            if (index !== 0) {
+              param.remove();
+            }
+          });
+
+          // Reset the first execution parameter's select field
+          const firstExecutionParameter = firstStatusParameter.querySelector('.execution-parameter select');
+          if (firstExecutionParameter) {
+            firstExecutionParameter.value = '';
           }
         }
+
+        // Clear localStorage
+        localStorage.removeItem('apiDataMandalika1');
+        localStorage.removeItem('formDataMandalika1');
+
+        console.log('LocalStorage after reset:', localStorage); // Check localStorage
+
+        // Refresh the page
+        location.reload();
       } else {
         return response.text().then((text) => {
           throw new Error(text);
@@ -935,7 +837,7 @@ async function startInterval() {
   // Fungsi untuk memulai SSE connections
   async function startSSEManualDevice() {
     try {
-      await fetchInitialStatus('mandalika2');
+      await fetchInitialStatus('mandalika1');
     } catch (error) {
       console.error('Error saat menjalankan fungsi SSE:', error);
     }
@@ -943,15 +845,171 @@ async function startInterval() {
 
   async function startSSEManualSensor() {
     try {
-      await fetchInitialData('mandalika2', 'waterlevel');
+      await fetchInitialData('mandalika1', 'waterlevel');
     } catch (error) {
       console.error('Error saat menjalankan fungsi SSE:', error);
     }
   }
 
-  setInterval(startSSEManualSensor, 30000);
+  setInterval(startSSEManualSensor, 5000);
   setInterval(startSSEManualDevice, 1000);
 }
 
 // Mulai interval pertama kali
 startInterval();
+
+// Fungsi untuk menambah parameter pengeksekusian
+function addExecutionParameter(event) {
+  const executionParameters = event.target.closest('.status-parameter').querySelector('.execution-parameters');
+  const currentStatusIndex = event.target.closest('.status-parameter').dataset.index;
+  const executionIndex = executionParameters.querySelectorAll('.execution-parameter-wrapper').length + 1;
+
+  const executionTemplate = `
+    <div class="execution-parameter-wrapper" data-index="${executionIndex}">
+      <div class="execution-parameter" data-index="${executionIndex}">
+        <select id="execution-command-${currentStatusIndex}-${executionIndex}" class="form-control" required>
+          <option value="" disabled selected>PILIH PERINTAH</option>
+          <option value="OPEN">BUKA</option>
+          <option value="CLOSE">TUTUP</option>
+          <option value="START">MULAI</option>
+          <option value="STOP">BERHENTI</option>
+        </select>
+      </div>
+      <div class="execution-priority" data-index="${executionIndex}">
+        <label for="execution-priority-${currentStatusIndex}-${executionIndex}">Prioritas Pengeksekusian</label>
+        <input type="number" id="execution-priority-${currentStatusIndex}-${executionIndex}" class="form-control" required />
+        <small class="form-text text-muted">Untuk mengatur nomor prioritas pengeksekusian perintah, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU PERINTAHNYA</small>
+      </div>
+      <div class="execution-buttons">
+        <button class="control-btn-add-execution" title="Tambah Perintah Pengeksekusian">Tambah</button>
+        <button class="control-btn-delete-execution" title="Hapus Perintah Pengeksekusian">Kurang</button>
+      </div>
+    </div>
+  `;
+
+  const newExecutionParameter = document.createElement('div');
+  newExecutionParameter.innerHTML = executionTemplate;
+
+  // Tambahkan event listener pada tombol baru
+  newExecutionParameter.querySelector('.control-btn-add-execution').addEventListener('click', addExecutionParameter);
+  newExecutionParameter.querySelector('.control-btn-delete-execution').addEventListener('click', function () {
+    newExecutionParameter.remove();
+    saveFormData();
+  });
+
+  executionParameters.appendChild(newExecutionParameter);
+
+  // Simpan data form setelah parameter pengeksekusian ditambahkan
+  saveFormData();
+}
+
+function addStatusParameter() {
+  const statusParameters = document.getElementById('status-parameters');
+  const currentIndex = statusParameters.childElementCount + 1;
+
+  const template = `
+     <div class="status-parameter" data-index="${currentIndex}">
+      <!-- Nama Status Parameter -->
+      <div class="form-group">
+        <label for="status-name-${currentIndex}">Nama Status Parameter ${currentIndex}</label>
+        <input type="text" id="status-name-${currentIndex}" class="form-control" required />
+        <small class="form-text text-muted">Untuk mengatur nama dari Status yang nanti ditampilkan, contoh : Aman/Siaga 1/Siaga 2/Bahaya</small>
+      </div>
+
+      <!-- Setpoint Range -->
+      <div class="form-group">
+        <label for="range-start-${currentIndex}">Setpoint Range</label>
+        <div class="row">
+          <div class="col">
+            <input type="number" id="range-start-${currentIndex}" class="form-control" required />
+          </div>
+          <div class="col text-center">
+            <strong>-</strong>
+          </div>
+          <div class="col">
+            <input type="number" id="range-end-${currentIndex}" class="form-control" required />
+          </div>
+        </div>
+      </div>
+
+      <!-- Prioritas Pengevaluasi -->
+      <div class="form-group">
+        <label for="eval-priority-${currentIndex}">Prioritas Pengevaluasi</label>
+        <input type="number" id="eval-priority-${currentIndex}" class="form-control" required />
+        <small class="form-text text-muted">Untuk mengatur nomor prioritas pengevaluasian rule, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU RULE-NYA</small>
+      </div>
+
+      <!-- Perintah Pengeksekusian -->
+      <div class="form-group">
+        <label for="execution-command-${currentIndex}">Perintah Pengeksekusian</label>
+        <div class="execution-parameters">
+          <div class="execution-parameter-wrapper" data-index="1">
+            <div class="execution-parameter" data-index="1">
+              <select id="execution-command-${currentIndex}-1" class="form-control" required>
+                <option value="" disabled selected>PILIH PERINTAH</option>
+                <option value="OPEN">BUKA</option>
+                <option value="CLOSE">TUTUP</option>
+                <option value="START">MULAI</option>
+                <option value="STOP">BERHENTI</option>
+              </select>
+            </div>
+            <div class="execution-priority" data-index="1">
+              <label for="execution-priority-${currentIndex}-1">Prioritas Pengeksekusian</label>
+              <input type="number" id="execution-priority-${currentIndex}-1" class="form-control" required />
+              <small class="form-text text-muted">Untuk mengatur nomor prioritas pengeksekusian perintah, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU PERINTAHNYA</small>
+            </div>
+          </div>
+          <div class="execution-buttons">
+            <button class="control-btn-add-execution" title="Tambah Perintah Pengeksekusian">Tambah</button>
+            <button class="control-btn-delete-execution" title="Hapus Perintah Pengeksekusian">Kurang</button>
+          </div>
+        </div>
+        <small class="form-text text-muted">Untuk mengatur perintah pengeksekusian dari status yang akan dibuat</small>
+      </div>
+
+      <!-- Tombol Hapus Status -->
+      <button class="control-btn-delete-status">Hapus Status</button>
+    </div>
+  `;
+
+  const newStatusParameter = document.createElement('div');
+  newStatusParameter.innerHTML = template;
+  statusParameters.appendChild(newStatusParameter);
+
+  // Add event listeners to the new add and delete buttons
+  newStatusParameter.querySelector('.control-btn-add-execution').addEventListener('click', addExecutionParameter);
+  newStatusParameter.querySelector('.control-btn-delete-execution').addEventListener('click', function () {
+    this.closest('.execution-parameter-wrapper').remove();
+    saveFormData();
+  });
+  newStatusParameter.querySelector('.control-btn-delete-status').addEventListener('click', function () {
+    newStatusParameter.remove();
+  });
+}
+
+// Add event listener to the existing add-status button
+document.getElementById('add-status').addEventListener('click', () => {
+  addStatusParameter();
+  saveFormData();
+});
+
+// Add event listeners to existing add-execution buttons
+document.querySelectorAll('.control-btn-add-execution').forEach((button) => {
+  button.addEventListener('click', addExecutionParameter);
+});
+
+// Add event listeners to existing delete buttons
+document.querySelectorAll('.control-btn-delete-execution').forEach((button) => {
+  button.addEventListener('click', function () {
+    this.closest('.execution-parameter-wrapper').remove();
+    saveFormData();
+  });
+});
+
+// Add event listeners to existing delete buttons
+document.querySelectorAll('.control-btn-delete-status').forEach((button) => {
+  button.addEventListener('click', function () {
+    button.parentElement.remove();
+    saveFormData();
+  });
+});
