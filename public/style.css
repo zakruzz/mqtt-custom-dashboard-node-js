@@ -294,7 +294,6 @@ main .history-charts-pintu1 {
 }
 
 main .history-charts-pintu2 {
-  display: inline-block;
   gap: 2.5rem;
   background: var(--color-white);
   border-radius: var(--border-radius-1);
@@ -498,14 +497,14 @@ main .histories h2 {
 }
 
 .control-btn-add-status {
-  width: 100%;
+  width: 31.5%;
   padding: 15px;
   background-color: #28a745;
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 10px;
   font-size: 16px;
 }
 
@@ -545,14 +544,14 @@ main .histories h2 {
 }
 
 .control-btn-delete-status {
-  width: 35%;
+  width: 31.5%;
   padding: 15px;
   background-color: #ff0000;
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 10px;
   font-size: 16px;
   margin-bottom: 45px;
 }
@@ -612,6 +611,10 @@ main .histories h2 {
   align-items: center;
 }
 
+.row.button-collapse-submit {
+  margin-top: 10px;
+}
+
 .col {
   flex: 1;
   padding-right: 10px; /* Menambahkan padding kanan untuk jarak antar kolom */
@@ -642,16 +645,15 @@ main .histories h2 {
 
 .execution-buttons {
   display: flex;
-  justify-content: space-between;
   margin-bottom: 10px; /* Menambahkan jarak di bawah dropdown */
   margin-top: 10px; /* Menambahkan jarak di bawah dropdown */
+  justify-content: flex-start; /* Ratakan ke kiri */
 }
 
 .execution-buttons .control-btn-add-execution,
 .execution-buttons .control-btn-delete-execution {
-  flex: 1;
-  padding: 10px;
-  margin: 0 5px;
+  padding: 8px 12px; /* Padding horizontal dan vertikal */
+  margin-right: 5px; /* Jarak antara tombol */
   text-align: center;
   border-radius: 5px;
   background-color: #007bff;
@@ -673,10 +675,127 @@ main .histories h2 {
   background-color: #c82333;
 }
 
+.execution-buttons .material-icons {
+  font-size: 18px; /* Ukuran ikon */
+  vertical-align: middle; /* Posisi ikon di tengah tombol */
+}
+
 .form-text.text-muted {
   color: #333 !important;
 }
 
+.hidden {
+  display: none;
+}
+
+.gear-button-container {
+  margin-top: 20px; /* Sesuaikan dengan jarak atas yang diinginkan */
+  text-align: left; /* Meratakan ke kiri */
+}
+
+.btn-gear {
+  background-color: #007bff; /* Warna latar belakang contoh */
+  color: white; /* Warna teks contoh */
+  padding: 10px 20px; /* Padding contoh */
+  border: none; /* Menghapus border default tombol */
+  cursor: pointer; /* Mengubah kursor menjadi pointer saat dihover */
+  border-radius: 5px; /* Sudut melengkung */
+}
+
+.btn-gear:hover {
+  background-color: #0056b3; /* Warna latar belakang saat dihover */
+}
+
+.tooltipped {
+  position: relative; /* Pastikan tooltip diposisikan relatif terhadap kontainernya */
+}
+
+.tooltipped::after {
+  content: attr(data-tooltip); /* Set konten tooltip */
+  position: absolute; /* Posisikan tooltip secara absolut */
+  background-color: rgba(0, 0, 0, 0.75); /* Warna latar belakang tooltip contoh */
+  color: white; /* Warna teks tooltip contoh */
+  padding: 5px; /* Padding tooltip contoh */
+  border-radius: 5px; /* Sudut melengkung tooltip */
+  top: -30px; /* Posisikan di atas tombol */
+  left: 0; /* Posisikan mulai dari kiri */
+  white-space: nowrap; /* Hindari tooltip memecah menjadi beberapa baris */
+  visibility: hidden; /* Sembunyikan secara default */
+  opacity: 0; /* Sembunyikan secara default */
+  transition: opacity 0.3s ease; /* Transisi halus untuk visibilitas */
+}
+
+.tooltipped:hover::after {
+  visibility: visible; /* Tampilkan tooltip saat dihover */
+  opacity: 1; /* Tampilkan tooltip saat dihover */
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border: none; /* Menghapus border default tombol */
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3; /* Warna latar belakang saat dihover */
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border: none; /* Menghapus border default tombol */
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border: none; /* Menghapus border default tombol */
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn {
+  margin: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn i.material-icons {
+  margin-right: 0.25rem;
+}
+
+.btn.btn-primary.btn-save {
+  padding: 0.75rem 3rem;
+}
+
+.btn.btn-danger.btn-reset {
+  padding: 0.75rem 3rem;
+}
 /* ********RIGHT ********** */
 .right {
   margin-top: 1.4rem;

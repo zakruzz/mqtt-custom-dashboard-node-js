@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%=dashboardTitle%></title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Sharp" rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.7.0/nouislider.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.7.0/nouislider.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
@@ -45,9 +48,17 @@
       <main>
         <h1><%=name%></h1>
         <h2><%=dashboardTitle%></h2>
-        <h2>Connection Status Mandalika 2 : <span id="connection-status2">Checking connection...</span></h2>
-        <h2>Status Outlet Water Level: <span id="status-outlet">Checking Status...</span></h2>
+        <h2>Koneksi Status Mandalika 2 : <span id="connection-status2">Checking connection...</span></h2>
+        <h2>Status Outlet Water Level: <span id="status-outlet">Belum Tersedia</span></h2>
         <h2>Status Outlet Gate: <span id="gate-status2"></span></h2>
+
+        <!-- Div baru untuk menempatkan tombol gear -->
+        <div class="gear-button-container">
+          <!-- Tombol Gear dengan Tooltip -->
+          <button id="toggle-form-btn" class="btn-gear tooltipped" data-tooltip="Perlihatkan Form Setting Setpoint">
+            <span class="material-symbols-outlined"> settings </span>
+          </button>
+        </div>
 
         <div class="insights">
           <div class="pintu2">
@@ -82,121 +93,94 @@
           </div>
         </div>
 
-        <div class="controls-container-setpoint">
-          <div class="card controls-setpoint">
-            <h2>Form Pengaturan</h2>
-
-            <!-- Interval dan Batas Waktu Akhir -->
-            <div class="form-group">
-              <div class="row">
-                <div class="col">
-                  <label for="startInterval">Interval Waktu Mulai (startInterval)</label>
-                  <input type="number" id="startInterval" class="form-control" required />
-                  <small class="form-text text-muted">Atur berapa waktu mulai proses pengecekan</small>
-                </div>
-                <div class="col">
-                  <label for="windowDuration">Batas Waktu Akhir (windowDuration)</label>
-                  <input type="number" id="end-time" class="form-control" required />
-                  <small class="form-text text-muted">Atur berapa lama proses pengecekan</small>
-                </div>
-                <div class="col">
-                  <label for="timeUnit">Satuan Waktu</label>
-                  <select id="timeUnit" class="form-control" required>
-                    <option value="" disabled selected>PILIH SATUAN WAKTU</option>
-                    <option value="MINUTES">MENIT</option>
-                    <option value="SECONDS">DETIK</option>
-                  </select>
-                  <small class="form-text text-muted">Atur untuk time unit yang ingin digunakan</small>
-                </div>
-              </div>
-            </div>
-
-            <!-- Garis Pembatas -->
-            <hr />
-
-            <div id="status-parameters">
-              <!-- Status Parameter Template -->
-              <div class="status-parameter" data-index="1">
-                <!-- Nama Status Parameter -->
-                <div class="form-group">
-                  <label for="status-name-1">Nama Status Parameter 1</label>
-                  <input type="text" id="status-name-1" class="form-control" required />
-                  <small class="form-text text-muted">Untuk mengatur nama dari Status yang nanti ditampilkan, contoh : Aman/Siaga 1/Siaga 2/Bahaya</small>
-                </div>
-
-                <div class="form-group">
-                  <label for="range-start-1">Jarak Setpoint</label>
-                  <div class="row">
-                    <div class="col">
-                      <input type="number" id="range-start-1" class="form-control" required />
-                    </div>
-                    <div class="col text-center">
-                      <strong>-</strong>
-                    </div>
-                    <div class="col">
-                      <input type="number" id="range-end-1" class="form-control" required />
-                    </div>
+        <!-- Bungkus Form dengan Div yang Tersembunyi -->
+        <div id="setpoint-form" class="hidden">
+          <div class="controls-container-setpoint">
+            <div class="card controls-setpoint">
+              <h2>Form Pengaturan</h2>
+              <!-- Form Elements -->
+              <div class="form-group">
+                <div class="row">
+                  <div class="col">
+                    <label for="startInterval">Interval Waktu Mulai (startInterval)</label>
+                    <input type="number" id="startInterval" class="form-control" required />
+                    <small class="form-text text-muted">Atur berapa waktu mulai proses pengecekan</small>
+                  </div>
+                  <div class="col">
+                    <label for="windowDuration">Batas Waktu Akhir (windowDuration)</label>
+                    <input type="number" id="windowDuration" class="form-control" required />
+                    <small class="form-text text-muted">Atur berapa lama proses pengecekan</small>
+                  </div>
+                  <div class="col">
+                    <label for="timeUnit">Satuan Waktu</label>
+                    <select id="timeUnit" class="form-control" required>
+                      <option value="" disabled selected>PILIH SATUAN WAKTU</option>
+                      <option value="SECONDS">DETIK</option>
+                      <option value="MINUTES">MENIT</option>
+                    </select>
+                    <small class="form-text text-muted">Atur untuk time unit yang ingin digunakan</small>
                   </div>
                 </div>
+              </div>
 
-                <div class="form-group">
-                  <label for="eval-priority-1">Prioritas Pengevaluasi</label>
-                  <input type="number" id="eval-priority-1" class="form-control" required />
-                  <small class="form-text text-muted">Untuk mengatur nomor prioritas pengevaluasian rule, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU RULE-NYA</small>
-                </div>
+              <hr />
 
-                <!-- bagian dari pintu1.ejs -->
-                <div class="form-group">
-                  <label for="execution-command-1">Perintah Pengeksekusian</label>
-                  <div class="execution-parameters">
-                    <div class="execution-parameter-wrapper" data-index="1">
-                      <div class="execution-parameter" data-index="1">
-                        <select id="execution-command-1-1" class="form-control" required>
-                          <option value="" disabled selected>PILIH PERINTAH</option>
-                          <option value="OPEN">BUKA</option>
-                          <option value="CLOSE">TUTUP</option>
-                          <option value="START">MULAI</option>
-                          <option value="STOP">BERHENTI</option>
-                        </select>
-                        <small class="form-text text-muted">Untuk mengatur perintah pengeksekusian dari status yang akan dibuat</small>
+              <div id="status-parameters">
+                <!-- Status Parameter Template -->
+                <div class="status-parameter" data-index="1">
+                  <!-- Nama Status Parameter -->
+                  <div class="form-group">
+                    <label for="status-name-1">Label Status 1</label>
+                    <input type="text" id="status-name-1-1" class="form-control" required />
+                    <small class="form-text text-muted">Untuk mengatur nama dari Status yang nanti ditampilkan, contoh : Aman/Siaga 1/Siaga 2/Bahaya</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="range-start-1">Rentang Nilai Terukur</label>
+                    <div class="row">
+                      <div class="col">
+                        <input type="number" id="range-start-1-1" class="form-control" required />
                       </div>
-                      <div class="execution-priority" data-index="1">
-                        <label for="execution-priority-1-1">Prioritas Pengeksekusian</label>
-                        <input type="number" id="execution-priority-1-1" class="form-control" required />
-                        <small class="form-text text-muted">Untuk mengatur nomor prioritas pengeksekusian perintah, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU PERINTAHNYA</small>
+                      <div class="col text-center">
+                        <strong>-</strong>
                       </div>
-                    </div>
-                    <div class="execution-buttons">
-                      <button class="control-btn-add-execution" title="Tambah Perintah Pengeksekusian">Tambah Pengeksekusi</button>
-                      <button class="control-btn-delete-execution" title="Hapus Perintah Pengeksekusian">Kurangi Pengeksekusi</button>
+                      <div class="col">
+                        <input type="number" id="range-end-1-1" class="form-control" required />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Tombol Hapus Status -->
-                <button class="control-btn-delete-status">Hapus Rule</button>
+                  <div class="form-group">
+                    <label for="eval-priority-1">Prioritas Evaluasi</label>
+                    <input type="number" id="eval-priority-1-1" class="form-control" required />
+                    <small class="form-text text-muted">Untuk mengatur nomor prioritas pengevaluasian rule, SEMAKIN BESAR ANGKANYA MAKA AKAN DIEKSEKUSI TERLEBIH DAHULU RULE-NYA</small>
+                  </div>
+
+                  <!-- Perintah Pengeksekusian -->
+                  <div class="form-group">
+                    <label for="execution-command-1">Perintah Eksekusi</label>
+                    <div class="execution-parameter-container"></div>
+                    <button type="button" class="btn btn-primary tambah-command" data-status-index="1"><i class="material-icons">add</i>Tambah Perintah</button>
+                  </div>
+
+                  <!-- Tombol Hapus Status -->
+                  <button type="button" class="btn btn-danger hapus-status" data-status-index="1"><i class="material-icons">remove</i> Hapus Rule</button>
+                </div>
               </div>
-            </div>
 
-            <button id="add-status" class="control-btn-add-status">Tambah Rule</button>
-            <hr />
+              <button type="button" id="add-status" class="btn btn-success"><i class="material-icons">add</i>Tambah Rule</button>
 
-            <!-- Tombol Aksi -->
-            <div class="form-group">
-              <div class="row">
-                <div class="col">
-                  <button id="Set-Point-Accept" class="control-btn-setpoint">Kirim Setpoint</button>
-                </div>
-                <div class="col">
-                  <button id="Set-Point-Update" class="control-btn-setpoint-update">Update Setpoint</button>
-                </div>
-                <div class="col">
-                  <button id="Set-Point-Delete" class="control-btn-setpoint-delete">Reset Setpoint</button>
+              <!-- Tombol Aksi -->
+              <div class="form-group">
+                <div class="row button-collapse-submit">
+                  <button type="button" id="Set-Point-Accept" class="btn btn-primary btn-save">Simpan Pengaturan</button>
+                  <button type="button" id="Set-Point-Delete" class="btn btn-danger btn-reset">Reset Pengaturan</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
         <!-- End of Insights -->
 
         <div class="data-table">
