@@ -475,7 +475,7 @@ document.getElementById('pintu1-up').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert(data.succeed);
+      alert("Gate berhasil dibuka," + data.succeed);
     })
     .catch((error) => {
       console.error('Error opening gate:', error);
@@ -493,7 +493,7 @@ document.getElementById('pintu1-down').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert(data.succeed);
+      alert("Gate berhasil ditutup," + data.succeed);
     })
     .catch((error) => {
       console.error('Error closing gate:', error);
@@ -511,7 +511,7 @@ document.getElementById('relay-on').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert(data.succeed);
+      alert("Relay berhasil dijalankan," + data.succeed);
     })
     .catch((error) => {
       console.error('Error starting relay:', error);
@@ -529,7 +529,7 @@ document.getElementById('relay-off').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert(data.succeed);
+      alert("Relay berhasil diberhentikan," + data.succeed);
     })
     .catch((error) => {
       console.error('Error stopping relay:', error);
