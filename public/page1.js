@@ -156,8 +156,6 @@ async function fetchInitialDataSetpointMandalika1(device, source) {
     const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
     const data = response.data;
     watchRulesMandalika1 = data.watchRules;
-    console.log(watchRulesMandalika1);
-    console.log('Watch Rules:', watchRules);
   } catch (error) {
     console.error('Error fetching initial data:', error);
   }
@@ -170,8 +168,6 @@ async function fetchInitialDataSetpointMandalika2(device, source) {
     const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
     const data = response.data;
     watchRulesMandalika2 = data.watchRules;
-    console.log(watchRulesMandalika2);
-    console.log('Watch Rules:', watchRules);
   } catch (error) {
     console.error('Error fetching initial data:', error);
   }
@@ -303,13 +299,14 @@ function updateInletBox(latestInLevelValue) {
   if (pintu1Div && pintu1Status) {
     pintu1Div.innerHTML = latestInLevelValue + 'M';
     const status = getStatusFromValueMandalika1(latestInLevelValue, watchRulesMandalika1);
-    console.log(status);
 
     if (status) {
       pintu1Div.innerHTML = latestInLevelValue + 'M';
       pintu1Status.innerText = status.statusText;
       pintu1Status.style.color = status.color;
     } else {
+      pintu1Status.innerText = 'Belum Tersedia';
+      pintu1Status.style.color = '#000';
       console.error('No matching status found for the given value:', latestInLevelValue);
     }
   } else {
@@ -324,13 +321,13 @@ function updateOutletBox(latestOutLevelValue) {
   if (pintu2Div && pintu2Status) {
     pintu2Div.innerHTML = latestOutLevelValue + 'M';
     const status = getStatusFromValueMandalika2(latestOutLevelValue, watchRulesMandalika2);
-    console.log(status);
-    console.log(pintu2Div.innerHTML);
     if (status) {
       pintu2Div.innerHTML = latestOutLevelValue + 'M';
       pintu2Status.innerText = status.statusText;
       pintu2Status.style.color = status.color;
     } else {
+      pintu2Status.innerText = 'Belum Tersedia';
+      pintu2Status.style.color = '#000';
       console.error('No matching status found for the given value:', latestOutLevelValue);
     }
   } else {

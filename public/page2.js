@@ -90,11 +90,9 @@ async function fetchInitialDataSetpoint(device, source) {
     const response = await axios.get(`/v1/watches/${device}/measurements/${source}`);
     const data = response.data;
     watchRules = data.watchRules;
-    console.log('Watch Rules:', watchRules);
     populateForm(data.evalWindow, watchRules);
   } catch (error) {
     if (error.response && error.response.status === 404) {
-      console.log('No existing data found, create new setpoint.');
       watchRules = [];
       clearForm();
     } else {
@@ -131,7 +129,6 @@ async function saveSetpointData(device, source, evalWindow, data) {
   try {
     const method = watchRules.length > 0 ? 'put' : 'post';
     await axios[method](`/v1/watches/${device}/measurements/${source}`, { evalWindow, watchRules: data });
-    console.log('Data saved successfully.');
   } catch (error) {
     console.error('Error saving data:', error);
   }
@@ -140,7 +137,6 @@ async function saveSetpointData(device, source, evalWindow, data) {
 async function deleteAllSetpoints(device, source) {
   try {
     await axios.delete(`/v1/watches/${device}/measurements/${source}`);
-    console.log('All data deleted successfully.');
     clearForm();
     watchRules = [];
   } catch (error) {
@@ -180,7 +176,6 @@ function addExecutionParameter(statusIndex, executionIndex, command = '', priori
 }
 
 function addStatusParameter(rule, index) {
-  console.log(rule);
   const statusParametersContainer = document.getElementById('status-parameters');
   const statusParameterHTML = `
     <div class="status-parameter" data-index="${index}">
@@ -604,7 +599,6 @@ function updateBoxes(latestValue) {
   if (pintu1Div && pintu1Status) {
     pintu1Div.innerHTML = latestValue + 'M';
     const status = getStatusFromValue(latestValue, watchRules);
-    console.log(status);
 
     if (status != null) {
       pintu1Div.innerHTML = latestValue + 'M';
@@ -612,6 +606,7 @@ function updateBoxes(latestValue) {
       pintu1Status.style.color = status.color;
     } else {
       pintu1Status.innerText = 'Belum Tersedia';
+      pintu1Status.style.color = '#000';
       console.error('No matching status found for the given value:', latestValue);
     }
   } else {
