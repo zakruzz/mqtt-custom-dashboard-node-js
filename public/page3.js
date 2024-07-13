@@ -607,6 +607,7 @@ function updateBoxes(latestValue) {
       pintu2Status.innerText = status.statusText;
       pintu2Status.style.color = status.color;
     } else {
+      pintu2Status.innerText = 'Belum Tersedia';
       console.error('No matching status found for the given value:', latestValue);
     }
   } else {

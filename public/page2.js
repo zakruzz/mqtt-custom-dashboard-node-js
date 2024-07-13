@@ -475,7 +475,7 @@ document.getElementById('pintu1-up').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert("Gate berhasil dibuka," + data.succeed);
+      alert('Gate berhasil dibuka,' + data.succeed);
     })
     .catch((error) => {
       console.error('Error opening gate:', error);
@@ -493,7 +493,7 @@ document.getElementById('pintu1-down').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert("Gate berhasil ditutup," + data.succeed);
+      alert('Gate berhasil ditutup,' + data.succeed);
     })
     .catch((error) => {
       console.error('Error closing gate:', error);
@@ -511,7 +511,7 @@ document.getElementById('relay-on').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert("Relay berhasil dijalankan," + data.succeed);
+      alert('Relay berhasil dijalankan,' + data.succeed);
     })
     .catch((error) => {
       console.error('Error starting relay:', error);
@@ -529,7 +529,7 @@ document.getElementById('relay-off').addEventListener('click', () => {
   })
     .then((response) => response.json())
     .then((data) => {
-      alert("Relay berhasil diberhentikan," + data.succeed);
+      alert('Relay berhasil diberhentikan,' + data.succeed);
     })
     .catch((error) => {
       console.error('Error stopping relay:', error);
@@ -573,6 +573,10 @@ function getStatusFromValue(latestValue, watchRules) {
         statusText: rule.ruleLabel,
         color: getColorFromLabel(rule.ruleLabel),
       };
+    } else {
+      return {
+        statusText: 'Belum Tersedia',
+      };
     }
   }
   return null;
@@ -600,12 +604,14 @@ function updateBoxes(latestValue) {
   if (pintu1Div && pintu1Status) {
     pintu1Div.innerHTML = latestValue + 'M';
     const status = getStatusFromValue(latestValue, watchRules);
+    console.log(status);
 
-    if (status) {
+    if (status != null) {
       pintu1Div.innerHTML = latestValue + 'M';
       pintu1Status.innerText = status.statusText;
       pintu1Status.style.color = status.color;
     } else {
+      pintu1Status.innerText = 'Belum Tersedia';
       console.error('No matching status found for the given value:', latestValue);
     }
   } else {
@@ -736,7 +742,7 @@ async function startInterval() {
       console.error('Error saat menjalankan fungsi SSE:', error);
     }
   }
-  
+
   async function startSSEManualControl() {
     try {
       await fetchInitialControlStatus('mandalika1');
