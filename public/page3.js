@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
         commandSpecs.push({
           targetIdentifier: {
             device: 'mandalika2', // Replace with actual device ID if necessary
-            target: 'waterlevel', // Replace with actual target ID if necessary
+            target: 'watergate', // Replace with actual target ID if necessary
           },
           commandValue: {
             value: command,
