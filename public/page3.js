@@ -738,8 +738,17 @@ async function startInterval() {
     }
   }
 
+  async function startSSEManualControl() {
+    try {
+      await fetchInitialControlStatus('mandalika2');
+    } catch (error) {
+      console.error('Error saat menjalankan fungsi SSE:', error);
+    }
+  }
+
   setInterval(startSSEManualSensor, 5000);
   setInterval(startSSEManualDevice, 1000);
+  setInterval(startSSEManualControl, 1000);
 }
 
 // Mulai interval pertama kali
