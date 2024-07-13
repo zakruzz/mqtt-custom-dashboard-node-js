@@ -574,6 +574,10 @@ function getStatusFromValue(latestValue, watchRules) {
         statusText: rule.ruleLabel,
         color: getColorFromLabel(rule.ruleLabel),
       };
+    } else {
+      return {
+        statusText: 'Belum Tersedia',
+      };
     }
   }
   return null;
