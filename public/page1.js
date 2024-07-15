@@ -267,7 +267,7 @@ function getColorFromLabelMandalika1(ruleLabel) {
 }
 function getStatusFromValueMandalika2(latestOutLevelValue, watchRulesMandalika2) {
   for (const rule of watchRulesMandalika2) {
-    if (latestOutLevelValue < rule.evalBoundary.lower && latestOutLevelValue <= rule.evalBoundary.upper) {
+    if (rule.evalBoundary.lower < latestOutLevelValue && latestOutLevelValue <= rule.evalBoundary.upper) {
       return {
         statusText: rule.ruleLabel,
         color: getColorFromLabelMandalika2(rule.ruleLabel),

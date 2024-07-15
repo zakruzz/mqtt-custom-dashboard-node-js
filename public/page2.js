@@ -563,7 +563,7 @@ function updateSensorReadings(inLevelSeries) {
 
 function getStatusFromValue(latestValue, watchRules) {
   for (const rule of watchRules) {
-    if (latestValue < rule.evalBoundary.lower && latestValue <= rule.evalBoundary.upper) {
+    if (rule.evalBoundary.lower < latestValue && latestValue <= rule.evalBoundary.upper) {
       return {
         statusText: rule.ruleLabel,
         color: getColorFromLabel(rule.ruleLabel),
