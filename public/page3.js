@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       newWatchRules.push({
         ruleLabel: statusName,
-        evalBoundary: { lower: parseFloat(lower), upper: parseFloat(upper) },
+        evalBoundary: { lower: lower, upper: upper },
         evalPriority: parseInt(evalPriority, 10),
         responseAction: {
           actionType: 'DISPATCH_CONTROL_COMMANDS',
@@ -540,7 +540,7 @@ function updateSensorReadings(outLevelSeries) {
 
     // Ambil elemen terbaru setelah pengurutan
     const latestData = outLevelSeries[0];
-    const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
+    const pintu2 = outLevelSeries.map((data) => Number(data.value));
 
     const timestamps = outLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
@@ -708,7 +708,7 @@ function updateTable(outLevelSeries) {
   data = outLevelSeries.map((item, index) => ({
     id: index + 1,
     name: 'mandalika2',
-    value: item.value,
+    value: Number(item.value),
     date: new Date(item.timestamp).toLocaleString('id-ID', {
       year: 'numeric',
       month: '2-digit',

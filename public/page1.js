@@ -186,7 +186,7 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
     const latestData = inLevelSeries[0];
     latestInLevelValue = latestData.value;
     // Memproses data untuk grafik
-    const pintu1 = inLevelSeries.map((data) => Number(data.value).toFixed(2));
+    const pintu1 = inLevelSeries.map((data) => Number(data.value));
     const timestamps = inLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
@@ -217,7 +217,7 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
     latestOutLevelValue = latestData.value;
 
     // Memproses data untuk grafik
-    const pintu2 = outLevelSeries.map((data) => Number(data.value).toFixed(2));
+    const pintu2 = outLevelSeries.map((data) => Number(data.value));
     const timestamps = outLevelSeries.map((data) => {
       const timestampInMilliseconds = data.timestamp;
       const date = new Date(timestampInMilliseconds);
@@ -374,7 +374,6 @@ mediaQuery.addEventListener('change', function (e) {
 
 function handleDeviceChange(e) {
   if (e.matches) {
-    // console.log('Inside Mobile');
     var updateHistory = {
       width: 323,
       height: 250,
