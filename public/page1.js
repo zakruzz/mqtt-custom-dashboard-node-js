@@ -241,7 +241,7 @@ function updateSensorReadings(inLevelSeries, outLevelSeries) {
 
 function getStatusFromValueMandalika1(latestInLevelValue, watchRulesMandalika1) {
   for (const rule of watchRulesMandalika1) {
-    if (latestInLevelValue >= rule.evalBoundary.lower && latestInLevelValue <= rule.evalBoundary.upper) {
+    if (rule.evalBoundary.lower < latestInLevelValue && latestInLevelValue <= rule.evalBoundary.upper) {
       return {
         statusText: rule.ruleLabel,
         color: getColorFromLabelMandalika1(rule.ruleLabel),
@@ -267,7 +267,7 @@ function getColorFromLabelMandalika1(ruleLabel) {
 }
 function getStatusFromValueMandalika2(latestOutLevelValue, watchRulesMandalika2) {
   for (const rule of watchRulesMandalika2) {
-    if (latestOutLevelValue >= rule.evalBoundary.lower && latestOutLevelValue <= rule.evalBoundary.upper) {
+    if (latestOutLevelValue < rule.evalBoundary.lower && latestOutLevelValue <= rule.evalBoundary.upper) {
       return {
         statusText: rule.ruleLabel,
         color: getColorFromLabelMandalika2(rule.ruleLabel),
