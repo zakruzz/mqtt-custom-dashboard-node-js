@@ -134,7 +134,7 @@ async function saveSetpointData(device, source, evalWindow, data) {
       url: `/v1/watches/${device}/measurements/${source}`,
       data: { evalWindow, watchRules: data },
       headers: {
-        'X-CSRF-Token': csrfToken
+        'X-XSRF-Token': csrfToken
       }
     });
   } catch (error) {
@@ -146,7 +146,7 @@ async function deleteAllSetpoints(device, source) {
   try {
     await axios.delete(`/v1/watches/${device}/measurements/${source}`, {
       headers: {
-        'X-CSRF-Token': csrfToken
+        'X-XSRF-Token': csrfToken
       }
     });
     clearForm();
@@ -479,7 +479,7 @@ document.getElementById('pintu2-up').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-XSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
@@ -498,7 +498,7 @@ document.getElementById('pintu2-down').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-XSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
@@ -517,7 +517,7 @@ document.getElementById('relay-on').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-XSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
@@ -536,7 +536,7 @@ document.getElementById('relay-off').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-XSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())

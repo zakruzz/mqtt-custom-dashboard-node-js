@@ -293,7 +293,11 @@ router.post('/api/data/:deviceId/control/:action', isAuthenticated, async (req, 
   const { deviceId, action } = req.params;
   const accessToken = req.session.user.accessToken;
   try {
-    const response = await axios.post(`${config.LINK}/v1/devices/${deviceId}/controls/watergate/commands`, { value: action.toUpperCase() }, { headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}`, 'X-CSRF-Token': req.csrfToken()  } });
+    const response = await axios.post(
+      `${config.LINK}/v1/devices/${deviceId}/controls/watergate/commands`,
+      { value: action.toUpperCase() },
+      { headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}`, 'X-XSRF-Token': req.csrfToken() } }
+    );
     sendControlEvent(deviceId, { currentState: action.toUpperCase() });
     res.json(response.data);
   } catch (error) {
@@ -309,7 +313,7 @@ router.post('/v1/watches/:device/measurements/:source', isAuthenticated, async (
 
   try {
     const response = await axios.post(`${config.LINK}/v1/watches/${device}/measurements/${source}`, data, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}`, 'X-CSRF-Token': req.csrfToken() },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}`, 'X-XSRF-Token': req.csrfToken() },
     });
     res.status(response.status).json(response.data);
   } catch (error) {
@@ -339,7 +343,7 @@ router.put('/v1/watches/:device/measurements/:source', isAuthenticated, async (r
 
   try {
     const response = await axios.put(`${config.LINK}/v1/watches/${device}/measurements/${source}`, data, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}`, 'X-CSRF-Token': req.csrfToken() },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}`, 'X-XSRF-Token': req.csrfToken() },
     });
     res.status(response.status).json(response.data);
   } catch (error) {
@@ -353,7 +357,7 @@ router.delete('/v1/watches/:device/measurements/:source', isAuthenticated, async
   const accessToken = req.session.user.accessToken;
   try {
     const response = await axios.delete(`${config.LINK}/v1/watches/${device}/measurements/${source}`, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}`, 'X-CSRF-Token': req.csrfToken() },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}`, 'X-XSRF-Token': req.csrfToken() },
     });
     res.status(response.status).json(response.data);
   } catch (error) {
