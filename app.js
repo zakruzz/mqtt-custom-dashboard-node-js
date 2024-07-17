@@ -3,6 +3,8 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const csurf = require('csurf');
 const port = 3001;
 
 // Set the view engine to ejs
@@ -17,6 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // Use CORS middleware
 app.use(cors());
 
+app.use(cookieParser());
+
 // Session middleware
 app.use(
   session({
@@ -27,6 +31,15 @@ app.use(
   })
 );
 
+// Middleware CSRF
+app.use(csurf({ cookie: true }));
+
+// Middleware untuk menambahkan token CSRF ke setiap respon
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
 app.use(bodyParser.json());
 app.use((req, res, next) => {
   next();
@@ -35,6 +48,16 @@ app.use((req, res, next) => {
 // Routes
 const dashboardRouter = require('./routes/dashboard');
 app.use('/', dashboardRouter); // Use the router for the root path
+
+// Error handling untuk CSRF
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    res.status(403);
+    res.send('Form tampered with');
+  } else {
+    next(err);
+  }
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

@@ -74,14 +74,14 @@ window.addEventListener('load', async () => {
   await fetchInitialControlStatus('mandalika2');
   await fetchInitialDataSetpoint('mandalika2', 'waterlevel');
 
-  loadFormData();
-
   setupSSEMeasurements('mandalika2');
   setupSSEDeviceStatus('mandalika2');
   setupSSEControlStatus('mandalika2');
 
   handleDeviceChange(mediaQuery);
 });
+
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 let watchRules = []; // Define watchRules outside of the fetch function
 
@@ -129,7 +129,14 @@ function clearForm() {
 async function saveSetpointData(device, source, evalWindow, data) {
   try {
     const method = watchRules.length > 0 ? 'put' : 'post';
-    await axios[method](`/v1/watches/${device}/measurements/${source}`, { evalWindow, watchRules: data });
+    await axios({
+      method: method,
+      url: `/v1/watches/${device}/measurements/${source}`,
+      data: { evalWindow, watchRules: data },
+      headers: {
+        'X-CSRF-Token': csrfToken
+      }
+    });
   } catch (error) {
     console.error('Error saving data:', error);
   }
@@ -137,7 +144,11 @@ async function saveSetpointData(device, source, evalWindow, data) {
 
 async function deleteAllSetpoints(device, source) {
   try {
-    await axios.delete(`/v1/watches/${device}/measurements/${source}`);
+    await axios.delete(`/v1/watches/${device}/measurements/${source}`, {
+      headers: {
+        'X-CSRF-Token': csrfToken
+      }
+    });
     clearForm();
     watchRules = [];
   } catch (error) {
@@ -468,6 +479,7 @@ document.getElementById('pintu2-up').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'X-CSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
@@ -486,6 +498,7 @@ document.getElementById('pintu2-down').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'X-CSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
@@ -504,6 +517,7 @@ document.getElementById('relay-on').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'X-CSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
@@ -522,6 +536,7 @@ document.getElementById('relay-off').addEventListener('click', () => {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'X-CSRF-Token': csrfToken
     },
   })
     .then((response) => response.json())
